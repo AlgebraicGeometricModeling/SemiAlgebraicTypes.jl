@@ -1,7 +1,7 @@
 #
 # Code adapted from https://github.com/TheBB/NURBS.jl package.
 #
-export BSplineBasis, BSplineFunction1D, BSplineFunction2D, domain, supported
+export BSplineBasis, BSplineFunction1D, BSplineFunction2D, BSplineFunction3D, domain, supported
 
 type BSplineBasis 
 
@@ -134,3 +134,21 @@ function (f::BSplineFunction2D){T<:Real}(u::T,v::T)
     sum(f.points[:,r1,r2]*v1[i1]*v2[i2] for (r1,i1) in zip(rng1,1:length(v1)),  (r2,i2) in zip(rng2,1:length(v2)))
 end
 
+#----------------------------------------------------------------------
+type BSplineFunction3D <: Function
+    points::Array{Float64,4}
+    basis1::BSplineBasis
+    basis2::BSplineBasis
+    basis3::BSplineBasis
+
+    function BSplineFunction2D(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis)
+        new(points,bs1,bs2,bs3)
+    end
+end
+
+function (f::BSplineFunction3D){T<:Real}(u::T,v::T,w::T)
+    v1,rng1 = eval(f.basis1,u)
+    v2,rng2 = eval(f.basis2,v)
+    v3,rng3 = eval(f.basis3,w)
+        sum(f.points[:,r1,r2,r3]*v1[i1]*v2[i2]*v3[i3] for (r1,i1) in zip(rng1, 1:length(v1)), (r2,i2) in zip(rng2, 1:length(v2)), (r3,i3) in zip(rng3, 1:length(v3)))
+end
