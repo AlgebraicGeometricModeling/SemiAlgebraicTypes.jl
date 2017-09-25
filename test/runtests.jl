@@ -1,3 +1,3 @@
 using SemiAlgebraicTypes
 
-include("test0.jl")
+include("test_constructor.jl")
