@@ -3,7 +3,7 @@
 #
 export BSplineBasis, BSplineFunction1D, BSplineFunction2D, BSplineFunction3D, domain, supported
 
-type BSplineBasis 
+mutable struct BSplineBasis 
 
     knots::Vector{Float64}
     order::Int
@@ -39,13 +39,13 @@ nderivs(b::BSplineBasis) = b.order - 1
 domain(b::BSplineBasis) = (b.knots[1] => b.knots[end])
 degree(b::BSplineBasis) = b.order - 1
 
-function supported{T<:Real}(b::BSplineBasis, pt::T)
+function supported(b::BSplineBasis, pt::T) where {T<:Real}
     kidx = b.order - 1 + searchsorted(b.knots[b.order:end], pt).stop
     stop = b.knots[kidx] == b.knots[end] ? kidx - b.order : kidx
     stop - b.order + 1 : stop
 end
 
-function supported{T<:Real}(b::BSplineBasis, pts::Vector{T})
+function supported(b::BSplineBasis, pts::Vector{T}) where {T<:Real}
     (min, max) = extrema(pts)
     @assert(min in domain(b) && max in domain(b), "pts outside the domain of the basis")
 
@@ -72,15 +72,15 @@ macro bs_er_scale(bvals, knots, mid, num)
     :($bvals ./= $knots[$mid:$mid+$num] - $knots[$mid-$num-1:$mid-1])
 end
 
-function eval{T<:Real}(b::BSplineBasis, t::T)
+function eval(b::BSplineBasis, t::T) where {T<:Real}
     rng = supported(b, t)
     
     # Basis values of order 1 (piecewise constants)
     bvals = zeros(Float64, b.order)
     bvals[end] = 1.0
 
-    const p = b.order
-    const bi = rng.start + p
+    p = b.order
+    bi = rng.start + p
 
     # Order increment
     for k in 0:p-2
@@ -96,7 +96,7 @@ function eval{T<:Real}(b::BSplineBasis, t::T)
 end
 
 #----------------------------------------------------------------------
-type BSplineFunction1D
+mutable struct BSplineFunction1D
     points::Array{Float64,2}
     basis::BSplineBasis
 
@@ -109,7 +109,7 @@ type BSplineFunction1D
     end
 end
 
-function (f::BSplineFunction1D){T<:Real}(t::T)
+function (f::BSplineFunction1D)(t::T) where {T<:Real}
     vals,rng = eval(f.basis,t)
     
     sum(f.points[:,r]*vals[i] for (r,i) in zip(rng,1:length(vals)))
@@ -118,7 +118,7 @@ end
 domain(f::BSplineFunction1D) = domain(f.basis)
 
 #----------------------------------------------------------------------
-type BSplineFunction2D <: Function
+mutable struct BSplineFunction2D <: Function
     points::Array{Float64,3}
     basis1::BSplineBasis
     basis2::BSplineBasis
@@ -128,14 +128,14 @@ type BSplineFunction2D <: Function
     end
 end
 
-function (f::BSplineFunction2D){T<:Real}(u::T,v::T)
+function (f::BSplineFunction2D)(u::T,v::T) where {T<:Real}
     v1,rng1 = eval(f.basis1,u)
     v2,rng2 = eval(f.basis2,v)
     sum(f.points[:,r1,r2]*v1[i1]*v2[i2] for (r1,i1) in zip(rng1,1:length(v1)),  (r2,i2) in zip(rng2,1:length(v2)))
 end
 
 #----------------------------------------------------------------------
-type BSplineFunction3D <: Function
+mutable struct BSplineFunction3D <: Function
     points::Array{Float64,4}
     basis1::BSplineBasis
     basis2::BSplineBasis
@@ -146,7 +146,7 @@ type BSplineFunction3D <: Function
     end
 end
 
-function (f::BSplineFunction3D){T<:Real}(u::T,v::T,w::T)
+function (f::BSplineFunction3D)(u::T,v::T,w::T) where {T<:Real}
     v1,rng1 = eval(f.basis1,u)
     v2,rng2 = eval(f.basis2,v)
     v3,rng3 = eval(f.basis3,w)
