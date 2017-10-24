@@ -1,4 +1,4 @@
-export HEdge, HMesh, nbv, nbe, nbf, edge, push_vertex!, push_edge!, push_face, glue_edge!,  prev, opp, ccw_edges, edges_on_face, minimal_edges
+export HEdge, HMesh, nbv, nbe, nbf, edge, vertex, push_vertex!, push_edge!, push_face, glue_edge!,  prev, opp, ccw_edges, edges_on_face, minimal_edges
 
 import Base: next
 
@@ -34,6 +34,7 @@ function push_edge!(m::HMesh, e::HEdge)
     push!(m.edges,e)
 end
 
+function vertex(m::HMesh, i) m.points[i] end
 function edge(m::HMesh, i) m.edges[i] end
 
 function Base.next(m::HMesh, e::Int64)
