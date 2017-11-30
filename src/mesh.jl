@@ -22,32 +22,32 @@ julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] 
 ``` 
 The following data are accessible:
 
-  - `m.points ::Vector{Vector{T}}`: array of points
+  - `m.points ::Matrix{T}`: array of points
   - `m.edges  ::Vector{Vector{Int64}}`: array of edges
   - `m.faces  ::Vector{Vector{Int64}}`: array of faces
   - `m.attr   ::Dict{String,Any}`: attributes
 
 """
 mutable struct Mesh{T}
-    points::Vector{Vector{T}}
+    points::Matrix{T}
     edges ::Vector{Vector{Int64}}
     faces ::Vector{Vector{Int64}}
     attr  ::Dict{String,Any}
 
-    function Mesh{T}(pts::Vector{Vector{T}},e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, attr::Dict{String,Any}) where T
+    function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, attr::Dict{String,Any}) where T
         new(pts,e,f,attr)
     end
 
 end
 
-function mesh(::Type{T}) where T
-    Mesh{T}(Vector{T}[], Vector{Int64}[], Vector{Int64}[], Dict{String,Any}())
+function mesh(::Type{T}, n::Int64 = 3) where T
+    Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Dict{String,Any}())
 end
 
-function mesh(P::Vector{Vector{T}},
-                 E::Vector{Edge}=Edge[],
-                 F::Vector{Face}=Face[];
-                 args...) where T
+function mesh(P::Matrix{T},
+              E::Vector{Edge}=Edge[],
+              F::Vector{Face}=Face[];
+              args...) where T
     m = Mesh{T}(P,E,F, Dict{String,Any}())
     for arg in args m[string(arg[1])]=arg[2] end
     return m
@@ -64,7 +64,7 @@ end
 """
 Insert a vertex at the end of the vertex array of a mesh.
 ```jldoctest
-julia> m = mesh(Float64);
+julia> m = mesh(Float64,3);
 
 julia> push_vertex!(m,[1.,2.,3.])
 SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[1.0, 2.0, 3.0]], Array{Int64,1}[], Array{Int64,1}[], Dict{String,Any}())
@@ -72,8 +72,7 @@ SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[1.0, 2.0, 3.0]], Array{Int64,
 ```
 """
 function push_vertex!(m::Mesh{T}, v::Vector{T}) where T
-    push!(m.points,v)
-    m
+    m.points = cat(2, m.points, v)
 end
 
 #----------------------------------------------------------------------

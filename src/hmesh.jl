@@ -1,4 +1,4 @@
-export HEdge, HMesh, nbv, nbe, nbf, edge, vertex, push_vertex!, push_edge!, push_face, glue_edge!,  prev, opp, ccw_edges, edges_on_face, minimal_edges
+export HEdge, HMesh, hmesh, nbv, nbe, nbf, edge, vertex, push_vertex!, push_edge!, push_face, glue_edge!,  prev, opp, ccw_edges, edges_on_face, minimal_edges
 
 import Base: next
 
@@ -14,27 +14,58 @@ mutable struct HEdge
 end
 
 mutable struct HMesh
-   points::Vector{Vector{Float64}}
+   points::Matrix{Float64}
    edges ::Vector{HEdge}
    faces ::Vector{Int64}
 
-   function HMesh() new(Vector{Float64}[],HEdge[],Int64[]) end
+   function HMesh() new(Matrix{Float64}(3,0),HEdge[],Int64[]) end
    
 end
 
-nbv(m::HMesh) = length(m.points)
+"""
+ Build a HMesh from the array of points and array of faces
+"""
+function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}} )
+    msh = HMesh()
+    msh.points = P
+    E = Dict{Pair{Int64,Int64},Int64}()
+    for f in F
+        ne = nbe(msh)
+        push_face!(msh,f[1],f[2],f[3],f[4])
+        for i in 1:length(f)
+            if f[i]< f[i%4+1]
+                l = f[i]; u = f[i%4+1]
+            else
+                u = f[i]; l = f[i%4+1]
+            end
+            e = get(E, l=>u, 0)
+            if e==0
+                E[l=>u] = ne+i
+            else
+                glue_edge!(msh, e, ne+i)
+            end
+        end
+    end
+    msh
+end
+
+function hmesh(m::Mesh)
+    hmesh(m.points, m.faces)
+end
+
+nbv(m::HMesh) = size(m.points,2)
 nbe(m::HMesh) = length(m.edges)
 nbf(m::HMesh) = length(m.faces)
 
 function push_vertex!(m::HMesh, v::Vector{Float64})
-    push!(m.points,v)
+    m.points= cat(2,m.points,v)
 end
 
 function push_edge!(m::HMesh, e::HEdge)
     push!(m.edges,e)
 end
 
-function vertex(m::HMesh, i) m.points[i] end
+function vertex(m::HMesh, i) m.points[:,i] end
 function edge(m::HMesh, i) m.edges[i] end
 
 function Base.next(m::HMesh, e::Int64)
@@ -84,6 +115,22 @@ function ccw_edges(m::HMesh, e0::Int64)
         else
             e1=0
         end
+    end
+    E
+end
+
+#----------------------------------------------------------------------
+function ccw_edges(m::HMesh)
+    E = [Int64[i] for i in 1:nbv(m)]
+    
+    for (e,i) in zip(m.edges, 1:nbe(m))
+        if i<E[e.point][1] || opp(m,i) == 0
+            E[e.point][1] = i
+        end
+    end
+
+    for i in 1:nbv(m)
+        E[i] = ccw_edges(m, E[i][1])
     end
     E
 end
