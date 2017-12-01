@@ -66,6 +66,8 @@ function push_edge!(m::HMesh, e::HEdge)
 end
 
 function vertex(m::HMesh, i) m.points[:,i] end
+function point(m::HMesh, i) m.edges[i].point end
+
 function edge(m::HMesh, i) m.edges[i] end
 
 function Base.next(m::HMesh, e::Int64)
@@ -121,16 +123,18 @@ end
 
 #----------------------------------------------------------------------
 function ccw_edges(m::HMesh)
-    E = [Int64[i] for i in 1:nbv(m)]
+
+    M = fill(nbe(m)+1, nbv(m))
     
     for (e,i) in zip(m.edges, 1:nbe(m))
-        if i<E[e.point][1] || opp(m,i) == 0
-            E[e.point][1] = i
+        if i<M[e.point] || opp(m,i) == 0
+            M[e.point] = i
         end
     end
-
+    
+    E = fill(Int64[], nbv(m))
     for i in 1:nbv(m)
-        E[i] = ccw_edges(m, E[i][1])
+        E[i] = ccw_edges(m, M[i])
     end
     E
 end

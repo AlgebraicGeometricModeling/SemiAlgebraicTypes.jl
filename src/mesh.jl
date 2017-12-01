@@ -109,7 +109,7 @@ function push_face!(m::Mesh{T}, f::Vector{Int64}) where T
     m
 end
 
-nbv(m::Mesh{T}) where T = length(m.points)
+nbv(m::Mesh{T}) where T = size(m.points,2)
 nbe(m::Mesh{T}) where T = length(m.edges)
 nbf(m::Mesh{T}) where T = length(m.faces)
 
