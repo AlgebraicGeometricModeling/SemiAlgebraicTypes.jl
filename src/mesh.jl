@@ -20,12 +20,12 @@ julia> mesh(Float64);
 julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] for i in 1:9]);
 
 ``` 
-The following data are accessible:
+**Fields:**
 
-  - `m.points ::Matrix{T}`: array of points
-  - `m.edges  ::Vector{Vector{Int64}}`: array of edges
-  - `m.faces  ::Vector{Vector{Int64}}`: array of faces
-  - `m.attr   ::Dict{String,Any}`: attributes
+  - `points ::Matrix{T}`: array of points
+  - `edges  ::Vector{Vector{Int64}}`: array of edges
+  - `faces  ::Vector{Vector{Int64}}`: array of faces
+  - `attr   ::Dict{String,Any}`: attributes
 
 """
 mutable struct Mesh{T}
@@ -52,6 +52,19 @@ function mesh(P::Matrix{T},
     for arg in args m[string(arg[1])]=arg[2] end
     return m
 end 
+
+function mesh(L::Vector{Vector{T}},
+              E::Vector{Edge}=Edge[],
+              F::Vector{Face}=Face[];
+              args...) where T
+    P = fill(zero(T),length(L[1]), length(L))
+    for i in 1:length(L)
+        P[:,i]= L[i]
+    end
+    m = Mesh{T}(P,E,F, Dict{String,Any}())
+    for arg in args m[string(arg[1])]=arg[2] end
+    return m
+end
 
 function getindex(m::Mesh{T}, s::String) where T
     get(m.attr, s, 0)
