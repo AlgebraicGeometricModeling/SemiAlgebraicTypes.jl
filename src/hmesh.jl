@@ -27,16 +27,16 @@ mutable struct HMesh
     points::Matrix{Float64}
     edges ::Vector{HEdge}
     faces ::Vector{Int64}
-    attr  ::Dict{String,Any}
+    attr  ::Dict{Symbol,Any}
     
     function HMesh()
-        new(Matrix{Float64}(3,0),HEdge[],Int64[], Dict{String,Any}())
+        new(Matrix{Float64}(3,0),HEdge[],Int64[], Dict{Symbol,Any}())
     end
 
     function HMesh(pts::Matrix{Float64},
                    e::Vector{HEdge},
                    f::Vector{Vector{Int64}},
-                   attr::Dict{String,Any})
+                   attr::Dict{Symbol,Any})
         new(pts,e,f,attr)
     end
 end
@@ -73,11 +73,11 @@ function hmesh(m::Mesh{Float64})
     hmesh(m.points, m.faces)
 end
 
-function getindex(m::HMesh, s::String) 
+function getindex(m::HMesh, s::Symbol) 
     get(m.attr, s, 0)
 end
 
-function setindex!(m::HMesh, v, s::String) 
+function setindex!(m::HMesh, v, s::Symbol) 
     m.attr[s] = v
 end
 

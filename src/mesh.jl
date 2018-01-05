@@ -25,31 +25,34 @@ julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] 
   - `points ::Matrix{T}`: array of points
   - `edges  ::Vector{Vector{Int64}}`: array of edges
   - `faces  ::Vector{Vector{Int64}}`: array of faces
-  - `attr   ::Dict{String,Any}`: attributes
+  - `attr   ::Dict{Symbol,Any}`: attributes
 
 """
 mutable struct Mesh{T}
     points::Matrix{T}
     edges ::Vector{Vector{Int64}}
     faces ::Vector{Vector{Int64}}
-    attr  ::Dict{String,Any}
+    attr  ::Dict{Symbol,Any}
 
-    function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, attr::Dict{String,Any}) where T
+    function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, attr::Dict{Symbol,Any}) where T
         new(pts,e,f,attr)
     end
 
 end
 
-function mesh(::Type{T}, n::Int64 = 3) where T
-    Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Dict{String,Any}())
+function mesh(::Type{T}, n::Int64 = 3;
+              args...) where T
+    m = Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Dict{Symbol,Any}())
+    for arg in args m[arg[1]]=arg[2] end
+    return m
 end
 
 function mesh(P::Matrix{T},
               E::Vector{Edge}=Edge[],
               F::Vector{Face}=Face[];
               args...) where T
-    m = Mesh{T}(P,E,F, Dict{String,Any}())
-    for arg in args m[string(arg[1])]=arg[2] end
+    m = Mesh{T}(P,E,F, Dict{Symbol,Any}())
+    for arg in args m[arg[1]]=arg[2] end
     return m
 end 
 
@@ -61,15 +64,15 @@ function mesh(L::Vector{Vector{T}},
     for i in 1:length(L)
         P[:,i]= L[i]
     end
-    m = Mesh{T}(P,E,F, Dict{String,Any}())
-    for arg in args m[string(arg[1])]=arg[2] end
+    m = Mesh{T}(P,E,F, Dict{Symbol,Any}())
+    for arg in args m[arg[1]]=arg[2] end
     return m
 end
 
-function getindex(m::Mesh{T}, s::String) where T
+function getindex(m::Mesh{T}, s::Symbol) where T
     get(m.attr, s, 0)
 end 
-function setindex!(m::Mesh{T}, v, s::String) where T
+function setindex!(m::Mesh{T}, v, s::Symbol) where T
     m.attr[s] = v
 end 
 
@@ -80,7 +83,7 @@ Insert a vertex at the end of the vertex array of a mesh.
 julia> m = mesh(Float64,3);
 
 julia> push_vertex!(m,[1.,2.,3.])
-SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[1.0, 2.0, 3.0]], Array{Int64,1}[], Array{Int64,1}[], Dict{String,Any}())
+SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[1.0, 2.0, 3.0]], Array{Int64,1}[], Array{Int64,1}[], Dict{Symbol,Any}())
 
 ```
 """
@@ -96,7 +99,7 @@ at the end of the edge array of the mesh.
 julia> m = mesh(Float64);
 
 julia> push_vertex!(m,point(0.,0.,0.)); push_vertex!(m,point(1.,0.,0.)); push_edge!(m,[1,2])
-SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]], Array{Int64,1}[[1, 2]], Array{Int64,1}[], Dict{String,Any}())
+SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]], Array{Int64,1}[[1, 2]], Array{Int64,1}[], Dict{Symbol,Any}())
 
 ```
 """
@@ -153,6 +156,6 @@ function cube(c::Vector{T}, r::T; args...) where T
     push_face!(m, [1,4,8,5])
     push_face!(m, [2,3,7,6])
 
-    for arg in args m[string(arg[1])]=arg[2] end
+    for arg in args m[arg[1]]=arg[2] end
     return m
 end

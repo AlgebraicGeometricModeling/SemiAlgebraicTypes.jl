@@ -1,7 +1,10 @@
 #
 # Code adapted from https://github.com/TheBB/NURBS.jl package.
 #
-export BSplineBasis, BSplineFunction1D, BSplineFunction2D, BSplineFunction3D, domain, supported
+
+export BSplineBasis, BSplineFunction1D, BSplineFunction2D, BSplineFunction3D,
+    domain, supported, eval_rng
+
 
 mutable struct BSplineBasis 
 
@@ -72,7 +75,7 @@ macro bs_er_scale(bvals, knots, mid, num)
     :($bvals ./= $knots[$mid:$mid+$num] - $knots[$mid-$num-1:$mid-1])
 end
 
-function eval(b::BSplineBasis, t::T) where {T<:Real}
+function eval_rng(b::BSplineBasis, t::T) where {T<:Real}
     rng = supported(b, t)
     
     # Basis values of order 1 (piecewise constants)
@@ -84,7 +87,8 @@ function eval(b::BSplineBasis, t::T) where {T<:Real}
 
     # Order increment
     for k in 0:p-2
-        @bs_er_scale bvals[p-k:end] b.knots bi k
+        #@bs_er_scale bvals[p-k:end] b.knots bi k
+        bvals[p-k:end] ./= b.knots[bi:bi+k] - b.knots[bi-k-1:bi-1]
         for (i, kp, kn) in zip(p-k-1:p-1, b.knots[bi-k-2:bi-2], b.knots[bi:bi+k])
             bvals[i] *= (t - kp)
             bvals[i] += bvals[i+1] * (kn - t)
@@ -110,7 +114,7 @@ mutable struct BSplineFunction1D
 end
 
 function (f::BSplineFunction1D)(t::T) where {T<:Real}
-    vals,rng = eval(f.basis,t)
+    vals,rng = eval_rng(f.basis,t)
     
     sum(f.points[:,r]*vals[i] for (r,i) in zip(rng,1:length(vals)))
 end
@@ -129,8 +133,8 @@ mutable struct BSplineFunction2D <: Function
 end
 
 function (f::BSplineFunction2D)(u::T,v::T) where {T<:Real}
-    v1,rng1 = eval(f.basis1,u)
-    v2,rng2 = eval(f.basis2,v)
+    v1,rng1 = eval_rng(f.basis1,u)
+    v2,rng2 = eval_rng(f.basis2,v)
     sum(f.points[:,r1,r2]*v1[i1]*v2[i2] for (r1,i1) in zip(rng1,1:length(v1)),  (r2,i2) in zip(rng2,1:length(v2)))
 end
 
@@ -147,8 +151,8 @@ mutable struct BSplineFunction3D <: Function
 end
 
 function (f::BSplineFunction3D)(u::T,v::T,w::T) where {T<:Real}
-    v1,rng1 = eval(f.basis1,u)
-    v2,rng2 = eval(f.basis2,v)
-    v3,rng3 = eval(f.basis3,w)
+    v1,rng1 = eval_rng(f.basis1,u)
+    v2,rng2 = eval_rng(f.basis2,v)
+    v3,rng3 = eval_rng(f.basis3,w)
         sum(f.points[:,r1,r2,r3]*v1[i1]*v2[i2]*v3[i3] for (r1,i1) in zip(rng1, 1:length(v1)), (r2,i2) in zip(rng2, 1:length(v2)), (r3,i3) in zip(rng3, 1:length(v3)))
 end
