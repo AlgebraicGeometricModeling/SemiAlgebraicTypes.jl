@@ -75,7 +75,7 @@ macro bs_er_scale(bvals, knots, mid, num)
     :($bvals ./= $knots[$mid:$mid+$num] - $knots[$mid-$num-1:$mid-1])
 end
 
-function eval_rng(b::BSplineBasis, t::T) where {T<:Real}
+function eval_rng(b::BSplineBasis, t::T, deriv::Int = 0 ) where {T<:Real}
     rng = supported(b, t)
     
     # Basis values of order 1 (piecewise constants)
@@ -86,7 +86,7 @@ function eval_rng(b::BSplineBasis, t::T) where {T<:Real}
     bi = rng.start + p
 
     # Order increment
-    for k in 0:p-2
+    for k in 0:p-deriv-2
         #@bs_er_scale bvals[p-k:end] b.knots bi k
         bvals[p-k:end] ./= b.knots[bi:bi+k] - b.knots[bi-k-1:bi-1]
         for (i, kp, kn) in zip(p-k-1:p-1, b.knots[bi-k-2:bi-2], b.knots[bi:bi+k])
@@ -94,6 +94,14 @@ function eval_rng(b::BSplineBasis, t::T) where {T<:Real}
             bvals[i] += bvals[i+1] * (kn - t)
         end
         bvals[end] *= (t - b.knots[bi-1])
+    end
+
+    # Differentiation
+    for k = p-deriv-1:p-2
+        #@bs_er_scale bvals[p-k:end] b.knots bi k
+        bvals[p-k:end] ./= b.knots[bi:bi+k] - b.knots[bi-k-1:bi-1]
+        bvals[1:end-1] = - diff(bvals)
+        bvals *= k + 1
     end
 
     bvals, rng
