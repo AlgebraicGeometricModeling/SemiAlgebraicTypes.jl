@@ -56,10 +56,11 @@ function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}}; args...)
         ne = nbe(msh)
         push_face!(msh,f[1],f[2],f[3],f[4])
         for i in 1:length(f)
-            if f[i]< f[i%4+1]
-                l = f[i]; u = f[i%4+1]
+            sf = length(f)
+            if f[i]< f[i%sf+1]
+                l = f[i]; u = f[i%sf+1]
             else
-                u = f[i]; l = f[i%4+1]
+                u = f[i]; l = f[i%sf+1]
             end
             e = get(E, l=>u, 0)
             if e==0
@@ -103,11 +104,6 @@ function push_edge!(m::HMesh, e::HEdge)
     return nbe(m)
 end
 
-function push_face!(m::HMesh, e1::Int64)
-    push!(m.faces,e1)
-    return nbf(m)
-end
-
 function vertex(m::HMesh, i) m.points[:,i] end
 
 function edge(m::HMesh, i) m.edges[i] end
@@ -128,6 +124,29 @@ end
 
 function face(m::HMesh, e::Int64)
     edge(m,e).face
+end
+
+function push_face!(m::HMesh, e1::Int64)
+    push!(m.faces,e1)
+    return nbf(m)
+end
+
+function push_face!(m::HMesh, F::Array{Int64})
+    ne = nbe(m)
+    f = nbf(m)+1
+    for i in 1:length(F)
+        e = HEdge()
+        e.point= F[i]
+        e.next = ne+i%length(F)+1
+        if i == 1
+            e.prev = ne+length(F)
+        else
+            e.prev = ne+i-1
+        end
+        e.face = f
+        push_edge!(m,e)
+    end
+    push!(m.faces, ne+1);
 end
 
 function push_face!(m::HMesh, p1::Int64, p2::Int64, p3::Int64, p4::Int64)
@@ -353,6 +372,7 @@ function glue_edge!(m::HMesh, i::Int64, j::Int64)
     m.edges[j].opp=i
 end
 
+#----------------------------------------------------------------------
 function ccw_edges(m::HMesh, e0::Int64)
     E = Int64[e0]
     o1 = prev(m,e0)
@@ -373,7 +393,7 @@ function ccw_edges(m::HMesh, e0::Int64)
     E
 end
 
-#----------------------------------------------------------------------
+
 """
     Array of arrays E[i] of edges in Counter-Clock-Wise order, which are 
     adjacent to the edge of index i, strating from the boundary edge if 
@@ -391,7 +411,11 @@ function ccw_edges(m::HMesh)
     
     E = fill(Int64[], nbv(m))
     for i in 1:nbv(m)
-        E[i] = ccw_edges(m, M[i])
+        if M[i]<= nbe(m)
+            E[i] = ccw_edges(m, M[i])
+        else
+            E[i] = Int64[]
+        end
     end
     E
 end
