@@ -54,7 +54,7 @@ function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}}; args...)
     E = Dict{Pair{Int64,Int64},Int64}()
     for f in F
         ne = nbe(msh)
-        push_face!(msh,f[1],f[2],f[3],f[4])
+        push_face!(msh,f) #f[1],f[2],f[3],f[4])
         for i in 1:length(f)
             sf = length(f)
             if f[i]< f[i%sf+1]
@@ -62,6 +62,7 @@ function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}}; args...)
             else
                 u = f[i]; l = f[i%sf+1]
             end
+
             e = get(E, l=>u, 0)
             if e==0
                 E[l=>u] = ne+i
