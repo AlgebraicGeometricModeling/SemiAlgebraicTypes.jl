@@ -108,34 +108,7 @@ function eval_rng(b::BSplineBasis, t::T, deriv::Int = 0 ) where {T<:Real}
 end
 
 
-function evalder(b::BSplineBasis,t::T) where {T<:Real}
-    bs = BSplineBasis(gs.knots,gs.degree,false)
-    b,r=eval_rng(bs,t)
-    newr=[0]
-    if r[1]==0 then
-    n=(length(b.knots)-1)
-    
-    bvals=[b[1] n/(t[i+1+n]-t[1+i])]
-    
-    end
-    for i in 2:length(r)
-    if r[i]==r[i-1]
-        push!(newr,r[i])
-        bvals[end]-=b[i]*n/(t[i+2+n]-t[2+i])
-        push!(bvals,b[i]*n/(t[i+1+n]-t[1+i]))
-    else
-        push!(rnew,r[i]-1)
-        push!(bvals,-b[i]*n/(t[i+2+n]-t[2+i]))
-        push!(rnew,r[i])
-        push!(bvals,b[i]*n/(t[i+1+n]-t[1+i]))
-    end
-    
-    end
-    
-    return b,newr
-    
-    
-end
+
 
 #----------------------------------------------------------------------
 mutable struct BSplineFunction1D
