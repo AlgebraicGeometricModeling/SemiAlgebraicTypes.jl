@@ -23,26 +23,28 @@ julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] 
 **Fields:**
 
   - `points ::Matrix{T}`: array of points
+ 
   - `edges  ::Vector{Vector{Int64}}`: array of edges
   - `faces  ::Vector{Vector{Int64}}`: array of faces
   - `attr   ::Dict{Symbol,Any}`: attributes
-
+ - `normals ::Matrix{T}`: array of normals
 """
 mutable struct Mesh{T}
     points::Matrix{T}
+    
     edges ::Vector{Vector{Int64}}
     faces ::Vector{Vector{Int64}}
     attr  ::Dict{Symbol,Any}
-
-    function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, attr::Dict{Symbol,Any}) where T
-        new(pts,e,f,attr)
+    normals::Matrix{T}
+    function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, attr::Dict{Symbol,Any},normals::Matrix{T}) where T
+        new(pts,e,f,attr,normals)
     end
 
 end
 
 function mesh(::Type{T}, n::Int64 = 3;
               args...) where T
-    m = Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Dict{Symbol,Any}())
+    m = Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Dict{Symbol,Any}(),Matrix{T}(n,0))
     for arg in args m[arg[1]]=arg[2] end
     return m
 end
@@ -90,6 +92,7 @@ SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[1.0, 2.0, 3.0]], Array{Int64,
 function push_vertex!(m::Mesh{T}, v::Vector{T}) where T
     m.points = cat(2, m.points, v)
 end
+
 
 #----------------------------------------------------------------------
 """
