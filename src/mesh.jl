@@ -18,33 +18,34 @@ Example
 julia> mesh(Float64);
 
 julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] for i in 1:9]);
-
 ``` 
+
 **Fields:**
 
   - `points ::Matrix{T}`: array of points
  
-  - `edges  ::Vector{Vector{Int64}}`: array of edges
-  - `faces  ::Vector{Vector{Int64}}`: array of faces
-  - `attr   ::Dict{Symbol,Any}`: attributes
- - `normals ::Matrix{T}`: array of normals
+  - `edges   ::Vector{Vector{Int64}}`: array of edges
+  - `faces   ::Vector{Vector{Int64}}`: array of faces
+  - `attr    ::Dict{Symbol,Any}`: attributes
+  - `normals ::Matrix{T}`: array of normals
 """
 mutable struct Mesh{T}
     points::Matrix{T}
     
     edges ::Vector{Vector{Int64}}
     faces ::Vector{Vector{Int64}}
-    attr  ::Dict{Symbol,Any}
     normals::Matrix{T}
-    function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, attr::Dict{Symbol,Any},normals::Matrix{T}) where T
-        new(pts,e,f,attr,normals)
+    attr  ::Dict{Symbol,Any}
+
+    function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, normals::Matrix{T}, attr::Dict{Symbol,Any}) where T
+        new(pts,e,f,normals,attr)
     end
 
 end
 
 function mesh(::Type{T}, n::Int64 = 3;
               args...) where T
-    m = Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Dict{Symbol,Any}(),Matrix{T}(n,0))
+    m = Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Matrix{T}(n,0), Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
 end
@@ -53,7 +54,7 @@ function mesh(P::Matrix{T},
               E::Vector{Edge}=Edge[],
               F::Vector{Face}=Face[];
               args...) where T
-    m = Mesh{T}(P,E,F, Dict{Symbol,Any}())
+    m = Mesh{T}(P,E,F, Matrix{T}(size(P,1),0), Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
 end 
@@ -66,7 +67,7 @@ function mesh(L::Vector{Vector{T}},
     for i in 1:length(L)
         P[:,i]= L[i]
     end
-    m = Mesh{T}(P,E,F, Dict{Symbol,Any}())
+    m = Mesh{T}(P,E,F,Matrix{T}(length(L[1]),0), Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
 end
