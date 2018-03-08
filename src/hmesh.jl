@@ -31,26 +31,29 @@ mutable struct HMesh
     points::Matrix{Float64}
     edges ::Vector{HEdge}
     faces ::Vector{Int64}
+    normals::Matrix{Float64}
     attr  ::Dict{Symbol,Any}
     
     function HMesh()
-        new(Matrix{Float64}(3,0),HEdge[],Int64[], Dict{Symbol,Any}())
+        new(Matrix{Float64}(3,0),HEdge[],Int64[],Matrix{Float64}(3,0), Dict{Symbol,Any}())
     end
 
     function HMesh(pts::Matrix{Float64},
                    e::Vector{HEdge},
                    f::Vector{Vector{Int64}},
+                   normals::Matrix{Float64},
                    attr::Dict{Symbol,Any})
-        new(pts,e,f,attr)
+        new(pts,e,f,normals,attr)
     end
 end
 
 """
  Build a HMesh from the array of points and array of faces
 """
-function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}}; args...)
+function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}},N::Matrix{Float64}=Matrix{Float64}(3,0); args...)
     msh = HMesh()
     msh.points = P
+    msh.normals = N
     E = Dict{Pair{Int64,Int64},Int64}()
     for f in F
         ne = nbe(msh)
@@ -76,7 +79,7 @@ function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}}; args...)
 end
 
 function hmesh(m::Mesh{Float64})
-    hmesh(m.points, m.faces)
+    hmesh(m.points, m.faces,m.normals)
 end
 
 function Base.getindex(m::HMesh, s::Symbol) 
