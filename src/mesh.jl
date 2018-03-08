@@ -1,4 +1,6 @@
-export Mesh, Edge, Face, mesh, getindex, nbv, nbe, nbf, push_vertex!, push_edge!, push_face!, cube
+export Mesh, Edge, Face, mesh, getindex, nbv, nbe, nbf,
+    push_vertex!, push_edge!, push_face!, push_normal!,
+    cube
 
 import Base: push!, getindex, setindex!, print
 #----------------------------------------------------------------------
@@ -132,6 +134,11 @@ end
 nbv(m::Mesh{T}) where T = size(m.points,2)
 nbe(m::Mesh{T}) where T = length(m.edges)
 nbf(m::Mesh{T}) where T = length(m.faces)
+
+#----------------------------------------------------------------------
+function push_normal!(m, v::Vector{T}) where T
+    m.normals = cat(2, m.normals, v)
+end
 
 #----------------------------------------------------------------------
 """
