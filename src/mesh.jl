@@ -24,20 +24,19 @@ julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] 
 
 **Fields:**
 
-  - `points ::Matrix{T}`: array of points
- 
+  - `points  ::Matrix{T}`: array of points
   - `edges   ::Vector{Vector{Int64}}`: array of edges
   - `faces   ::Vector{Vector{Int64}}`: array of faces
-  - `attr    ::Dict{Symbol,Any}`: attributes
   - `normals ::Matrix{T}`: array of normals
+  - `attr    ::Dict{Symbol,Any}`: attributes
 """
 mutable struct Mesh{T}
     points::Matrix{T}
     
-    edges ::Vector{Vector{Int64}}
-    faces ::Vector{Vector{Int64}}
+    edges  ::Vector{Vector{Int64}}
+    faces  ::Vector{Vector{Int64}}
     normals::Matrix{T}
-    attr  ::Dict{Symbol,Any}
+    attr   ::Dict{Symbol,Any}
 
     function Mesh{T}(pts::Matrix{T}, e::Vector{Vector{Int64}}, f::Vector{Vector{Int64}}, normals::Matrix{T}, attr::Dict{Symbol,Any}) where T
         new(pts,e,f,normals,attr)
@@ -54,22 +53,24 @@ end
 
 function mesh(P::Matrix{T},
               E::Vector{Edge}=Edge[],
-              F::Vector{Face}=Face[];
+              F::Vector{Face}=Face[],
+              N::Matrix{T}=Matrix{T}(size(P,1),0);
               args...) where T
-    m = Mesh{T}(P,E,F, Matrix{T}(size(P,1),0), Dict{Symbol,Any}())
+    m = Mesh{T}(P,E,F,N, Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
 end 
 
 function mesh(L::Vector{Vector{T}},
               E::Vector{Edge}=Edge[],
-              F::Vector{Face}=Face[];
+              F::Vector{Face}=Face[],
+              N::Matrix{T} = Matrix{T}(length(L[1]),0);
               args...) where T
     P = fill(zero(T),length(L[1]), length(L))
     for i in 1:length(L)
         P[:,i]= L[i]
     end
-    m = Mesh{T}(P,E,F,Matrix{T}(length(L[1]),0), Dict{Symbol,Any}())
+    m = Mesh{T}(P,E,F,N, Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
 end

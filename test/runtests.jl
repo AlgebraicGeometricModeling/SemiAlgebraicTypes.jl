@@ -1,3 +1,4 @@
 using SemiAlgebraicTypes
 
-include("test_constructors.jl")
+include("constructors_test.jl")
+include("hmesh_test.jl")
