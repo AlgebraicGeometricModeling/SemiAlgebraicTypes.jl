@@ -1,4 +1,5 @@
 export Mesh, Edge, Face, mesh, getindex, nbv, nbe, nbf,
+    point, edge, face, normal,
     push_vertex!, push_edge!, push_face!, push_normal!,
     cube
 
@@ -82,6 +83,7 @@ function setindex!(m::Mesh{T}, v, s::Symbol) where T
     m.attr[s] = v
 end 
 
+
 #----------------------------------------------------------------------
 """
 Insert a vertex at the end of the vertex array of a mesh.
@@ -95,6 +97,7 @@ SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[1.0, 2.0, 3.0]], Array{Int64,
 """
 function push_vertex!(m::Mesh{T}, v::Vector{T}) where T
     m.points = cat(2, m.points, v)
+    return size(m.points,2)
 end
 
 
@@ -132,15 +135,32 @@ function push_face!(m::Mesh{T}, f::Vector{Int64}) where T
     m
 end
 
-nbv(m::Mesh{T}) where T = size(m.points,2)
-nbe(m::Mesh{T}) where T = length(m.edges)
-nbf(m::Mesh{T}) where T = length(m.faces)
-
 #----------------------------------------------------------------------
 function push_normal!(m, v::Vector{T}) where T
     m.normals = cat(2, m.normals, v)
 end
 
+#----------------------------------------------------------------------
+nbv(m::Mesh{T}) where T = size(m.points,2)
+nbe(m::Mesh{T}) where T = length(m.edges)
+nbf(m::Mesh{T}) where T = length(m.faces)
+
+#----------------------------------------------------------------------
+function point(m::Mesh{T}, i::Int64) where T
+    return m.points[:,i]
+end
+#----------------------------------------------------------------------
+function edge(m::Mesh{T}, i::Int64) where T
+    return m.edges[i]
+end
+#----------------------------------------------------------------------
+function face(m::Mesh{T}, i::Int64) where T
+    return m.faces[i]
+end
+#----------------------------------------------------------------------
+function normal(m::Mesh{T}, i::Int64) where T
+    return m.normals[:,i]
+end
 #----------------------------------------------------------------------
 """
 ```
@@ -160,6 +180,62 @@ function cube(c::Vector{T}, r::T; args...) where T
     push_vertex!(m,c+[r,-r,r])
     push_vertex!(m,c+[r,r,r])
     push_vertex!(m,c+[-r,r,r])
+
+    push_edge!(m, [1,2])
+    push_edge!(m, [2,3])
+    push_edge!(m, [3,4])
+    push_edge!(m, [1,4])
+    push_edge!(m, [5,6])
+    push_edge!(m, [6,7])
+    push_edge!(m, [7,8])
+    push_edge!(m, [5,8])
+    push_edge!(m, [1,5])
+    push_edge!(m, [2,6])
+    push_edge!(m, [3,7])
+    push_edge!(m, [4,8])
+    
+    push_face!(m, [1,2,3,4])
+    push_face!(m, [5,6,7,8])
+    push_face!(m, [1,2,6,5])
+    push_face!(m, [3,4,8,7])
+    push_face!(m, [1,4,8,5])
+    push_face!(m, [2,3,7,6])
+
+    for arg in args m[arg[1]]=arg[2] end
+    return m
+end
+
+"""
+```
+cube(p1::Vector{T}, p2::Vector{T})
+```
+Compute the mesh corresponding to a cube aligned with the axes with diagonal points p1, p2.
+"""
+function cube(p1::Vector{T}, p2::Vector{T}; args...) where T
+    m = mesh(T)
+
+    push_vertex!(m, [p1[1],p1[2],p1[3]])
+    push_vertex!(m, [p2[1],p1[2],p1[3]])
+    push_vertex!(m, [p2[1],p2[2],p1[3]])
+    push_vertex!(m, [p1[1],p2[2],p1[3]])
+
+    push_vertex!(m, [p1[1],p1[2],p2[3]])
+    push_vertex!(m, [p2[1],p1[2],p2[3]])
+    push_vertex!(m, [p2[1],p2[2],p2[3]])
+    push_vertex!(m, [p1[1],p2[2],p2[3]])
+
+    push_edge!(m, [1,2])
+    push_edge!(m, [2,3])
+    push_edge!(m, [3,4])
+    push_edge!(m, [1,4])
+    push_edge!(m, [5,6])
+    push_edge!(m, [6,7])
+    push_edge!(m, [7,8])
+    push_edge!(m, [5,8])
+    push_edge!(m, [1,5])
+    push_edge!(m, [2,6])
+    push_edge!(m, [3,7])
+    push_edge!(m, [4,8])
     
     push_face!(m, [1,2,3,4])
     push_face!(m, [5,6,7,8])
