@@ -1,4 +1,6 @@
-export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, edge, vertex, push_vertex!, push_edge!, push_face!, split_edge!, split_face!, glue_edge!, prev, opp, face, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!
+export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, edge, vertex, point_of, vertex_of,
+    push_vertex!, push_edge!, push_face!, split_edge!, split_face!, glue_edge!,
+    prev, opp, face, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!
 
 import Base: next,  getindex, setindex!, print
 
@@ -8,7 +10,7 @@ mutable struct HEdge
     prev::Int64
     opp::Int64
     face::Int64
-   
+
     function HEdge()
         new(0,0,0,0,0)
     end
@@ -33,7 +35,7 @@ mutable struct HMesh
     faces ::Vector{Int64}
     normals::Matrix{Float64}
     attr  ::Dict{Symbol,Any}
-    
+
     function HMesh()
         new(Matrix{Float64}(3,0),HEdge[],Int64[],Matrix{Float64}(3,0), Dict{Symbol,Any}())
     end
@@ -82,15 +84,15 @@ function hmesh(m::Mesh{Float64})
     hmesh(m.points, m.faces,m.normals)
 end
 
-function Base.getindex(m::HMesh, s::Symbol) 
+function Base.getindex(m::HMesh, s::Symbol)
     get(m.attr, s, 0)
 end
 
-# function Base.getindex(m::HMesh, e::Int64) 
+# function Base.getindex(m::HMesh, e::Int64)
 #      m.edges[e]
 # end
 
-function setindex!(m::HMesh, v, s::Symbol) 
+function setindex!(m::HMesh, v, s::Symbol)
     m.attr[s] = v
 end
 
@@ -108,11 +110,15 @@ function push_edge!(m::HMesh, e::HEdge)
     return nbe(m)
 end
 
-function vertex(m::HMesh, i) m.points[:,i] end
+#function vertex(m::HMesh, i) m.points[:,i] end
 
 function edge(m::HMesh, i) m.edges[i] end
 
 function point(m::HMesh, i) m.edges[i].point end
+
+function vertex_of(m::HMesh, e) m.edges[e].point end
+
+function point_of(m::HMesh, e) m.points[:, m.edges[e].point] end
 
 function Base.next(m::HMesh, e::Int64)
     m.edges[e].next
@@ -167,7 +173,7 @@ function push_face!(m::HMesh, p1::Int64, p2::Int64, p3::Int64, p4::Int64)
     push!(m.faces, ne+1);
 end
 
-# function split_edge!(m::HMesh, e0::Int64, v::Int64) 
+# function split_edge!(m::HMesh, e0::Int64, v::Int64)
 #     if point(m, e0) != v
 
 #         H1 = HEdge(edge(m, e0))
@@ -190,7 +196,7 @@ end
 #             O1.next  = next(m, o0)
 #             push_edge!(m, O1)
 #             o1 = nbe(m)
-            
+
 #             edge(m,o0).next = o1
 #             edge(m,o1).prev = o0
 #             edge(m,e0).opp = o1
@@ -215,7 +221,7 @@ function split_edge!(m, e, p)
     edge(m,edge(m,e).next).prev = ne
     edge(m,e).next = ne
 
-    o = edge(m,e).opp    
+    o = edge(m,e).opp
     if o !=0
 
         NO = HEdge(edge(m,o))
@@ -224,7 +230,7 @@ function split_edge!(m, e, p)
         NO.opp = ne
 
         no = push_edge!(m,NO)
-        
+
         edge(m,o).point = p
         edge(m,o).prev = no
 
@@ -244,31 +250,31 @@ end
 #         e1 = next(m,e1)
 #         v = point(m,e1)
 #     end
-# 
+#
 #     e2 = next(m,e1)
 #     v  = point(m,e2)
 #     while v!=v0 && v!=v1
 #         e2 = next(m,e2)
 #         v = point(m,e2)
 #     end
-# 
+#
 #     push_face!(m,e1)
 #     f0 = face(m,e1)
 #     f1 = nbf(m)
-# 
+#
 #     edge(m,e1).face = f1
 #     e = next(m,e1)
 #     while e !=e2
 #         edge(m,e).face = f1
 #         e = next(m,e)
 #     end
-#     
+#
 #     p1 = prev(m,e1)
 #     H1 = HEdge(point(m,e1),e2,p1,0,f0)
 #     push_edge!(m,H1)
 #     n1 = nbe(m)
 #     edge(m,p1).next = n1
-# 
+#
 #     p2 = prev(m,e2)
 #     O1 = HEdge(point(m,e2),e1,p2,0,f1)
 #     push_edge!(m,O1)
@@ -276,7 +282,7 @@ end
 #     edge(m,p2).next = n2
 #     edge(m,n1).opp  = n2
 #     edge(m,n2).opp  = n1
-# 
+#
 # end
 
 """
@@ -318,7 +324,7 @@ function split_face!(m, fidx, v1,  v2)
 
     edge(m,e1).prev = ne2
     edge(m,e2).prev = ne1
-    
+
     m.faces[fidx] = ne2
 
     nf = push_face!(m,ne1)
@@ -329,11 +335,11 @@ function split_face!(m, fidx, v1,  v2)
         edge(m,e).face=nf
         e = edge(m,e).next
     end
-    
+
 end
 
 """
-    Subdivide each face by inserting the middle of the edges and the middle of the faces. 
+    Subdivide each face by inserting the middle of the edges and the middle of the faces.
 """
 function subdivide_middle!(m)
     N = nbv(m)
@@ -399,20 +405,20 @@ end
 
 
 """
-    Array of arrays E[i] of edges in Counter-Clock-Wise order, which are 
-    adjacent to the edge of index i, strating from the boundary edge if 
-    it exists. 
+    Array of arrays E[i] of edges in Counter-Clock-Wise order, which are
+    adjacent to the edge of index i, strating from the boundary edge if
+    it exists.
 """
 function ccw_edges(m::HMesh)
 
     M = fill(nbe(m)+1, nbv(m))
-    
+
     for (e,i) in zip(m.edges, 1:nbe(m))
         if i<M[e.point] || opp(m,i) == 0
             M[e.point] = i
         end
     end
-    
+
     E = fill(Int64[], nbv(m))
     for i in 1:nbv(m)
         if M[i]<= nbe(m)
