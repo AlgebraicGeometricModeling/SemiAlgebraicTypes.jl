@@ -1,5 +1,6 @@
 using SemiAlgebraicTypes
 
+export next
 import SemiAlgebraicTypes: nbv, push_vertex!, push_edge!, push_face!
 
 ######################################################################
@@ -45,7 +46,7 @@ mutable struct Cell
     left::Any
     right::Any
     dir::Int64
-    
+
     function Cell(C::Vector{Int64})
         new(C,0,0,0)
     end
@@ -69,7 +70,7 @@ function flat_cell(f::Vector{Int64}, v::Int64)
         Cell([f[1],f[1],f[2],f[2],f[3],f[3],f[4],f[4]])
     elseif v == 2
         Cell([f[1],f[2],f[1],f[2],f[3],f[4],f[3],f[4]])
-    else 
+    else
         return Cell(cat(1,f,f))
     end
 end
@@ -101,15 +102,15 @@ mutable struct SbdTree
     root :: SbdNode
 
     function SbdTree(i::Int64=0) new(SbdNode(i)) end
-    
+
 end
 function is_leaf(c:: SbdNode) return c.left==0 && c.right == 0 end
 ######################################################################
 mutable struct TMesh
     points::Vector{Vector{Float64}}
-    vertices::Vector{Vector{Int64}}
+    nghbrs::Vector{Vector{Int64}}
     cells::Vector{Cell}
-    
+
     function TMesh()
         new(Vector{Float64}[],Vector{Int64}[],Cell[])
     end
@@ -134,7 +135,7 @@ function tmesh(p::Vector{Float64}, P::Vector{Float64})
             insert_edge!(m, cell_face[v][1][k], cell_face[v][2][k], v);
         end
     end
-    
+
     return m
 end
 
@@ -148,16 +149,16 @@ end
 
 function SemiAlgebraicTypes.push_vertex!(m::TMesh, p::Vector{Float64})
     m.points = push!(m.points, p)
-    m.vertices = push!(m.vertices, fill(0,6))
-    return size(m.vertices,1)
+    m.nghbrs = push!(m.nghbrs, fill(0,6))
+    return size(m.nghbrs,1)
 end
 
-function Base.next(m::TMesh, i::Int64, v::Int64)
-    return m.vertices[i][2*v]
+function next(m::TMesh, i::Int64, v::Int64)
+    return m.nghbrs[i][2*v]
 end
 
 function previous(m::TMesh, i::Int64, v::Int64)
-    return m.vertices[i][2*v-1]
+    return m.nghbrs[i][2*v-1]
 end
 
 function push_cell!(m::TMesh, C::Cell)
@@ -175,7 +176,7 @@ end
 
 
 function vertex(m::TMesh, i::Int64)
-    return m.vertices[i]
+    return m.nghbrs[i]
 end
 
 function cell(m::TMesh, i::Int64)
@@ -216,7 +217,7 @@ function find_vertex(m::TMesh, p::Vector, i0::Int64, i1::Int64, v)
         end
         i = next(vertex(m,i),v)
     end
-    
+
     return 0
 end
 
@@ -227,7 +228,7 @@ function check(m, i1::Int64, i2::Int64, v::Int64)
         print(j, " - ", vertex(m,j), "    ")
         j = next(m,j,v)
     end
-    
+
     if j != 0
         println(j, " - ", vertex(m,j))
     else
@@ -253,10 +254,10 @@ function insert_vertex!(m::TMesh, p::Vector{Float64},
     #println("tmesh::insert_vertex ", v, "  ", i0, " ", i1, "   ", vertex(m,i0), "  ", vertex(m,i1))
     #a = i0; b = i1;
     #check(m,i0,i1,v)
-    
+
     #println("tmesh::insert_vertex")
     j = i0
-    while j!=0 && p[v] >= point(m,j,v) && j != i1 
+    while j!=0 && p[v] >= point(m,j,v) && j != i1
         i0 = j
         j = next(m,j,v)
         #println("  i0 ", i0,"  ",j, "  ", v)
@@ -274,14 +275,14 @@ function insert_vertex!(m::TMesh, p::Vector{Float64},
         return i0
     elseif isapprox(p[v],point(m,i1,v))
         #println("tmesh::insert_vertI1 ", i0, " ", i1, " -> ", i1, "    ", vertex(m,i1), " ", point(m,i1))
-        
+
         return i1
     else
         n = push_vertex!(m, p)
-        m.vertices[i0][2*v]   = n
-        m.vertices[n][2*v-1]  = i0
-        m.vertices[n][2*v]    = i1
-        m.vertices[i1][2*v-1] = n
+        m.nghbrs[i0][2*v]   = n
+        m.nghbrs[n][2*v-1]  = i0
+        m.nghbrs[n][2*v]    = i1
+        m.nghbrs[i1][2*v-1] = n
         #println("tmesh::insert_vertex ", i0, " ", i1, " -> ", n, "   ", vertex(m,n), " ", vertex(m,i0), "  ", vertex(m,i1))
 
         return n
@@ -294,7 +295,7 @@ function insert_middle!(m::TMesh, i0::Int64, i1::Int64, v::Int64)
     p  = (p0 + p1)/2.0
 
     return insert_vertex!(m, p, i0, i1, v)
-        
+
 end
 
 function insert_middle!(m::TMesh, i0::Int64, i1::Int64)
@@ -304,11 +305,11 @@ end
 
 function insert_edge!(m, i0::Int64, i1::Int64, v::Int64)
     #println(">>> insert_edge  ", i0, "  ", i1, "  ",v, "   ", vertex(m,i0), "  ",vertex(m,i1))
-    if   m.vertices[i0][2*v] == 0
-        m.vertices[i0][2*v]  = i1
+    if   m.nghbrs[i0][2*v] == 0
+        m.nghbrs[i0][2*v]  = i1
     end
-    if m.vertices[i1][2*v-1] == 0
-        m.vertices[i1][2*v-1] = i0
+    if m.nghbrs[i1][2*v-1] == 0
+        m.nghbrs[i1][2*v-1] = i0
     end
     #println("<<< insert_edge  ", i0, "  ", i1, "  ",v, "   ", vertex(m,i0), "  ",vertex(m,i1))
 end
@@ -360,7 +361,7 @@ function split_cell(m::TMesh, c::Int64, v::Int64)
     insert_edge!(m, p[2], p[4])
     insert_edge!(m, p[3], p[4])
     insert_edge!(m, p[1], p[3])
-    
+
     c1 = push_cell!(m, Cell([c for c in C.corners]))
     c2 = push_cell!(m, Cell([c for c in C.corners]))
 
@@ -372,7 +373,7 @@ function split_cell(m::TMesh, c::Int64, v::Int64)
     m.cells[c].left =c1
     m.cells[c].right=c2
     m.cells[c].dir  =v
-    
+
     #println("split done ", c, "  ", v, "   ", cell(m,c))
     return c1, c2
 end
@@ -390,7 +391,7 @@ function is_adjacent(m:: TMesh, c1 ::Int64, c2::Int64)
 
     # println("   ", c1, "  ",c2)
 
-    for i in 1:3 
+    for i in 1:3
         if M1[i] < m2[i] return 0 end
         if M2[i] < m1[i] return 0 end
     end
@@ -403,7 +404,7 @@ function is_adjacent(m:: TMesh, c1 ::Int64, c2::Int64)
     v1 = 0
     v2 = 0
     f = Int64[]
-    for i in 1:3 
+    for i in 1:3
         if vmin[i] > vmax[i]
             return 0
         elseif vmin[i] == vmax[i]
@@ -420,11 +421,11 @@ function is_adjacent(m:: TMesh, c1 ::Int64, c2::Int64)
         end
     end
 
-    if n == 1 
-        if m1[f[1]] >= m2[f[1]] && M1[f[1]] <= M2[f[1]] && m1[f[2]] >= m2[f[2]] && M1[f[2]] <= M2[f[2]] 
+    if n == 1
+        if m1[f[1]] >= m2[f[1]] && M1[f[1]] <= M2[f[1]] && m1[f[2]] >= m2[f[2]] && M1[f[2]] <= M2[f[2]]
             return v1
         elseif m2[f[1]] >= m1[f[1]] && M2[f[1]] <= M1[f[1]] && m2[f[2]] >= m1[f[2]] && M1[f[2]] <= M1[f[2]]
-            
+
             return -v2
         else
             return 10

@@ -1,8 +1,8 @@
-export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, edge, vertex, point_of, vertex_of,
+export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, edge, point, point_of, vertex_of,
     push_vertex!, push_edge!, push_face!, split_edge!, split_face!, glue_edge!,
-    prev, opp, face, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!
+    prev, opp, face, next, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!
 
-import Base: next,  getindex, setindex!, print
+import Base: getindex, setindex!, print
 
 mutable struct HEdge
     point::Int64
@@ -37,10 +37,10 @@ mutable struct HMesh
     attr  ::Dict{Symbol,Any}
 
     function HMesh()
-        new(Matrix{Float64}(3,0),HEdge[],Int64[],Matrix{Float64}(3,0), Dict{Symbol,Any}())
+        new(Matrix{Float64}(undef,3,0), HEdge[], Int64[], Matrix{Float64}(undef,3,0), Dict{Symbol,Any}())
     end
 
-    function HMesh(pts::Matrix{Float64},
+    function HMesh(pts::AbstractArray{Float64,2},
                    e::Vector{HEdge},
                    f::Vector{Vector{Int64}},
                    normals::Matrix{Float64},
@@ -52,7 +52,7 @@ end
 """
  Build a HMesh from the array of points and array of faces
 """
-function hmesh(P::Matrix{Float64}, F::Vector{Vector{Int64}},N::Matrix{Float64}=Matrix{Float64}(3,0); args...)
+function hmesh(P::AbstractArray{Float64,2}, F::Vector{Vector{Int64}},N::Matrix{Float64}=Matrix{Float64}(undef,3,0); args...)
     msh = HMesh()
     msh.points = P
     msh.normals = N
@@ -101,7 +101,7 @@ nbe(m::HMesh) = length(m.edges)
 nbf(m::HMesh) = length(m.faces)
 
 function push_vertex!(m::HMesh, v::Vector{Float64})
-    m.points= cat(2,m.points,v)
+    m.points= hcat(m.points,v)
     return nbv(m)
 end
 
@@ -110,17 +110,15 @@ function push_edge!(m::HMesh, e::HEdge)
     return nbe(m)
 end
 
-#function vertex(m::HMesh, i) m.points[:,i] end
+function point(m::HMesh, i) m.points[:,i] end
 
 function edge(m::HMesh, i) m.edges[i] end
 
-function point(m::HMesh, i) m.edges[i].point end
+function vertex_of(m::HMesh, i) m.edges[i].point end
 
-function vertex_of(m::HMesh, e) m.edges[e].point end
+function point_of(m::HMesh, i) m.points[:, m.edges[i].point] end
 
-function point_of(m::HMesh, e) m.points[:, m.edges[e].point] end
-
-function Base.next(m::HMesh, e::Int64)
+function next(m::HMesh, e::Int64)
     m.edges[e].next
 end
 

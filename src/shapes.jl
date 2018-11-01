@@ -1,10 +1,11 @@
 export Line, Sphere, Cylinder, Cone, point, sphere, line, cylinder, cone
 
+point() = Float64[0.0,0.0,0.0]
 point(x ::T, y::T) where T = T[x,y]
 point(x ::T, y::T, z::T) where T = T[x,y,z]
 #----------------------------------------------------------------------
 """
-``` 
+```
 Line{T}
 ```
 Line represented by two points.
@@ -31,7 +32,7 @@ end
 
 #----------------------------------------------------------------------
 """
-``` 
+```
 Sphere{T}
 ```
 Sphere represented by a center and a radius.
@@ -57,7 +58,7 @@ end
 
 #----------------------------------------------------------------------
 """
-``` 
+```
 Cylinder{T}
 ```
 Cylinder represented by two points and a radius.
@@ -83,7 +84,7 @@ end
 
 #----------------------------------------------------------------------
 """
-``` 
+```
 Cone{T}
 ```
 Cone represented by two points and a radius.

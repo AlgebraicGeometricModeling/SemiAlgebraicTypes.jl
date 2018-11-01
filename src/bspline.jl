@@ -6,7 +6,7 @@ export BSplineBasis, BSplineFunction1D, BSplineFunction2D, BSplineFunction3D,
     domain, supported, eval_rng
 
 
-mutable struct BSplineBasis 
+mutable struct BSplineBasis
 
     knots::Vector{Float64}
     order::Int
@@ -30,7 +30,7 @@ mutable struct BSplineBasis
     end
 
     BSplineBasis(lft::Real, rgt::Real, elements::Int, order::Int) =
-        BSplineBasis(linspace(lft, rgt, elements+1), order)
+        BSplineBasis(LinRange(lft, rgt, elements+1), order)
 end
 
 Base.length(b::BSplineBasis) = length(b.knots) - b.order
@@ -77,7 +77,7 @@ end
 
 function eval_rng(b::BSplineBasis, t::T, deriv::Int = 0 ) where {T<:Real}
     rng = supported(b, t)
-    
+
     # Basis values of order 1 (piecewise constants)
     bvals = zeros(Float64, b.order)
     bvals[end] = 1.0
@@ -126,7 +126,7 @@ end
 
 function (f::BSplineFunction1D)(t::T) where {T<:Real}
     vals,rng = eval_rng(f.basis,t)
-    
+
     sum(f.points[:,r]*vals[i] for (r,i) in zip(rng,1:length(vals)))
 end
 

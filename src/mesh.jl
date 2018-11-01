@@ -22,7 +22,7 @@ Example
 julia> mesh(Float64);
 
 julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] for i in 1:9]);
-``` 
+```
 
 **Fields:**
 
@@ -34,7 +34,7 @@ julia> mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] 
 """
 mutable struct Mesh{T}
     points::Matrix{T}
-    
+
     edges  ::Vector{Vector{Int64}}
     faces  ::Vector{Vector{Int64}}
     normals::Matrix{T}
@@ -48,7 +48,7 @@ end
 
 function mesh(::Type{T}, n::Int64 = 3;
               args...) where T
-    m = Mesh{T}(Matrix{T}(n,0), Vector{Int64}[], Vector{Int64}[], Matrix{T}(n,0), Dict{Symbol,Any}())
+    m = Mesh{T}(Matrix{T}(undef,n,0), Vector{Int64}[], Vector{Int64}[], Matrix{T}(undef,n,0), Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
 end
@@ -56,17 +56,17 @@ end
 function mesh(P::Matrix{T},
               E::Vector{Edge}=Edge[],
               F::Vector{Face}=Face[],
-              N::Matrix{T}=Matrix{T}(size(P,1),0);
+              N::Matrix{T}=Matrix{T}(undef,size(P,1),0);
               args...) where T
     m = Mesh{T}(P,E,F,N, Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
-end 
+end
 
 function mesh(L::Vector{Vector{T}},
               E::Vector{Edge}=Edge[],
               F::Vector{Face}=Face[],
-              N::Matrix{T} = Matrix{T}(length(L[1]),0);
+              N::Matrix{T} = Matrix{T}(undef,length(L[1]),0);
               args...) where T
     P = fill(zero(T),length(L[1]), length(L))
     for i in 1:length(L)
@@ -79,10 +79,10 @@ end
 
 function getindex(m::Mesh{T}, s::Symbol) where T
     get(m.attr, s, 0)
-end 
+end
 function setindex!(m::Mesh{T}, v, s::Symbol) where T
     m.attr[s] = v
-end 
+end
 
 
 #----------------------------------------------------------------------
@@ -97,7 +97,7 @@ SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[1.0, 2.0, 3.0]], Array{Int64,
 ```
 """
 function push_vertex!(m::Mesh{T}, v::Vector{T}) where T
-    m.points = cat(2, m.points, v)
+    m.points = hcat(m.points, v)
     return size(m.points,2)
 end
 
@@ -138,7 +138,7 @@ end
 
 #----------------------------------------------------------------------
 function push_normal!(m, v::Vector{T}) where T
-    m.normals = cat(2, m.normals, v)
+    m.normals = hcat(m.normals, v)
 end
 
 #----------------------------------------------------------------------
@@ -156,14 +156,25 @@ Number of faces of the mesh m
 nbf(m::Mesh{T}) where T = length(m.faces)
 
 #----------------------------------------------------------------------
+"""
+ Point of index i in the mesh m, as a Vector{T}.
+"""
 function point(m::Mesh{T}, i::Int64) where T
     return m.points[:,i]
 end
 #----------------------------------------------------------------------
+"""
+ Edge of index i in the mesh m, as a Vector{Int64} containing the
+ indices of the vertices of the edge.
+"""
 function edge(m::Mesh{T}, i::Int64) where T
     return m.edges[i]
 end
 #----------------------------------------------------------------------
+"""
+ Face of index i in the mesh m, as a Vector{Int64} containing the
+ indices of the vertices on the face boundary.
+"""
 function face(m::Mesh{T}, i::Int64) where T
     return m.faces[i]
 end
@@ -176,7 +187,7 @@ end
 ```
 cube(c::Vector{T},r::T)
 ```
-Compute the mesh corresponding to a cube aligned with the axes and centered 
+Compute the mesh corresponding to a cube aligned with the axes and centered
 at the point c of size 2r.
 """
 function cube(c::Vector{T}, r::T; args...) where T
@@ -185,7 +196,7 @@ function cube(c::Vector{T}, r::T; args...) where T
     push_vertex!(m,c+[r,-r,-r])
     push_vertex!(m,c+[r,r,-r])
     push_vertex!(m,c+[-r,r,-r])
-    
+
     push_vertex!(m,c+[-r,-r,r])
     push_vertex!(m,c+[r,-r,r])
     push_vertex!(m,c+[r,r,r])
@@ -203,7 +214,7 @@ function cube(c::Vector{T}, r::T; args...) where T
     push_edge!(m, [2,6])
     push_edge!(m, [3,7])
     push_edge!(m, [4,8])
-    
+
     push_face!(m, [1,2,3,4])
     push_face!(m, [5,6,7,8])
     push_face!(m, [1,2,6,5])
@@ -221,7 +232,7 @@ Replace duplicate points which are within distance eps by a single point.
 The default value for eps is 1.e-3
 """
 function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
-    P = Matrix{Float64}(3,0)
+    P = Matrix{Float64}(undef,3,0)
     Idx = fill(0,nbv(m))
     c = 1
     for i in 1:nbv(m)
@@ -239,7 +250,7 @@ function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
             c+=1
         end
     end
-    
+
     F = Vector{Int64}[]
     for f in m.faces
         nf = Int64[]
@@ -284,7 +295,7 @@ function cube(p1::Vector{T}, p2::Vector{T}; args...) where T
     push_edge!(m, [2,6])
     push_edge!(m, [3,7])
     push_edge!(m, [4,8])
-    
+
     push_face!(m, [1,2,3,4])
     push_face!(m, [5,6,7,8])
     push_face!(m, [1,2,6,5])
