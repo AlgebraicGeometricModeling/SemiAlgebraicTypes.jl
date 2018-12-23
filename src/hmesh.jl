@@ -2,7 +2,8 @@
     point_of, ptidx_of, face_of,
     push_vertex!, push_edge!, push_face!,
     split_edge!, set_face!, split_face!, glue_edge!, length_face,
-    prev, opp, face, next, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!
+    prev, opp, face, next, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!,
+    cc_subdivide!
 
 import Base: getindex, setindex!, print
 
@@ -419,3 +420,167 @@ function minimal_edges(m::HMesh)
     V
 end
 #----------------------------------------------------------------------
+
+"""
+  Catmull-Clark subdivision of a Half-Edge mesh.
+
+  The mesh msh is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
+"""
+function cc_subdivide!(msh::HMesh, n::Int64 = 1)
+
+ for i in 1:n
+    # println("msh ", nbv(msh), " ", nbe(msh), " ", nbf(msh))
+    nv0 = nbv(msh)
+
+    val = fill(0, nbv(msh))
+    bde = fill(0, nbv(msh))
+
+    for e in 1:nbe(msh)
+        p = edge(msh, e).point
+        val[p]+=1
+        if opp(msh,e) == 0
+            bde[p] = e
+        end
+    end
+
+    # compute a point on each face 
+    # println("-- face points")
+    ptf = fill(0, nbf(msh))
+    for f in 1:nbf(msh)
+        e0 = msh.faces[f]
+        p = point_of(msh,e0)
+        e = next(msh,e0)
+        c = 1 
+        while e != e0
+            p += point_of(msh,e)
+            e = next(msh,e)
+            c += 1
+        end
+        p/=c
+        ptf[f] =  push_vertex!(msh,p)
+    end
+
+    # compute a point on each edge 
+    # println("-- edge points")
+
+    pte = fill(0, nbe(msh))
+    for e in 1:nbe(msh)
+        if pte[e] == 0
+
+            o = opp(msh, e)
+            if o != 0
+                p  = point_of(msh,e)
+                p += point_of(msh, next(msh,e))
+                p += point(msh, ptf[edge(msh,e).face])
+                p += point(msh, ptf[edge(msh,o).face])
+                p /= 4.0
+                pte[e] = push_vertex!(msh,p)
+                pte[o] = pte[e]
+            else
+                p   = point_of(msh, e)
+                p  += point_of(msh, next(msh,e))
+                p /= 2
+                pte[e] = push_vertex!(msh, p)
+            end
+        end
+    end
+
+    #println("msh ", nbv(msh), " ", nbe(msh), " ", nbf(msh))
+    
+    #NwPoints = fill(0.0, size(msh.points))
+    # println("-- vertex points (1)")
+    for p in 1:nv0
+        v = val[p]
+        if bde[p] == 0
+            # Interior point
+            msh.points[:,p] .*= ((v-2.0)/v) #((v-2)/v)
+        elseif val[p] == 1
+            #println(":: vertex corner point ", p)
+            #NwPoints[:,p] = msh.points[:,p]
+        else
+            #NwPoints[:,p] = msh.points[:,p]*6
+            #println(" --> boundary point ", p)
+            msh.points[:,p] *= 0.5
+            #println(":: vertex boundary point")
+        end
+    end
+
+    # println("-- vertex points (2)")
+    for e in 1:nbe(msh)
+        p = ptidx_of(msh,e)
+        if bde[p] == 0
+            # Not a boundary point
+            v = val[p]
+            msh.points[:,p] += point(msh, pte[e])*(1.0/(v*v))
+            f = edge(msh,e).face
+            msh.points[:,p] += point(msh, ptf[f])*(1.0/(v*v))
+        elseif bde[p] != 0 && val[p] != 1
+            # Boundary not corner
+            if opp(msh, e) == 0 
+                #println(" --> boundary point ", p, "  ", e)
+                #msh.points[:,p] *= 0.5
+                msh.points[:,p] += point(msh, pte[e])*0.25
+                be = e
+                c = 0
+                while opp(msh, prev(msh,be)) != 0 && c<100
+                    be = opp(msh, prev(msh, be))
+                    # println("be   ", be, "  ", ptidx_of(msh,be))
+                    # if ptidx_of(msh,be) != p
+                    #     println("xxxx")
+                    #     break
+                    # end
+                    c+=1
+                    #println(">>", be)
+                end
+                be  = prev(msh,be)
+                msh.points[:,p] += point(msh, pte[be])*0.25
+            end
+        end
+    end
+    
+    # Split edges
+    # println("-- split edges")
+    spl = fill(0, nbe(msh))
+    for e in 1:nbe(msh)
+         o = opp(msh,e)
+         if o == 0 
+             spl[e] = 1
+         elseif spl[o] == 0
+             spl[e] = 1
+         end
+    end
+
+    for e in 1:nbe(msh)
+        if spl[e] == 1
+            split_edge!(msh, e, pte[e])
+            #println("->split ", e, "  ", edge(msh,e))
+        end
+    end
+    
+    # Split faces
+    # println("-- split faces")
+    e = fill(0,8)
+    for f in 1:nbf(msh)
+        e[1] = msh.faces[f]
+        for i in 2:8
+            e[i] = next(msh,e[i-1])
+        end
+
+        p1 = ptidx_of(msh,e[4])
+        p2 = ptidx_of(msh,e[8])
+
+        split_face!(msh, f, ptidx_of(msh,e[2]), ptidx_of(msh,e[6]))
+
+        nf = nbf(msh)
+
+
+        split_edge!(msh, nbe(msh), ptf[f] )
+
+        # println("---------"); check(msh); println("---------")
+        
+        split_face!(msh, nf,  p1, ptf[f])
+        split_face!(msh,  f,  p2, ptf[f])
+
+    end
+  end
+end
