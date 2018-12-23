@@ -1,0 +1,14 @@
+<axl>
+<mesh color="255 0 0">
+<count>4 0 1</count>
+<points>
+1  0 0
+0  1 0
+-1 0 0
+0 -1 0
+</points>
+<faces>
+4 0 1 2 3
+</faces>
+</mesh>
+</axl>
