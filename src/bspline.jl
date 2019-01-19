@@ -143,10 +143,12 @@ mutable struct BSplineFunction2D <: Function
     end
 end
 
-function (f::BSplineFunction2D)(u::T,v::T) where {T<:Real}
-    v1,rng1 = eval_rng(f.basis1,u)
-    v2,rng2 = eval_rng(f.basis2,v)
-    sum(f.points[:,r1,r2]*v1[i1]*v2[i2] for (r1,i1) in zip(rng1,1:length(v1)),  (r2,i2) in zip(rng2,1:length(v2)))
+function (f::BSplineFunction2D)(u::T,v::T, d1=0, d2=0) where {T<:Real}
+    v1, rng1 = eval_rng(f.basis1,u,d1)
+    v2, rng2 = eval_rng(f.basis2,v,d2)
+    sum(f.points[:,r1,r2]*v1[i1]*v2[i2]
+        for (r1,i1) in zip(rng1,1:length(v1)),
+            (r2,i2) in zip(rng2,1:length(v2)))
 end
 
 #----------------------------------------------------------------------

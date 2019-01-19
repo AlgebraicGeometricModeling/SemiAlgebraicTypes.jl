@@ -1,4 +1,4 @@
-    export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, face,
+    export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, hedge, face,
     point_of, ptidx_of, face_of,
     push_vertex!, push_edge!, push_face!,
     split_edge!, set_face!, split_face!, glue_edge!, length_face,
@@ -115,6 +115,7 @@ end
 
 function point(m::HMesh, i) m.points[:,i] end
 function edge(m::HMesh, i) m.edges[i] end
+function hedge(m::HMesh, i) m.edges[i] end
 function face(m::HMesh, i) m.faces[i] end
 
 #function vertex_of(m::HMesh, i) m.edges[i].point end
