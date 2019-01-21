@@ -239,7 +239,7 @@ function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
         Idx[i]=i
         pt = m.points[:,i]
         for j in 1:size(P,2)
-            if norm(P[:,j]-pt)< eps
+            if norm(P[:,j]-pt) < eps
                 Idx[i]=j
                 j = size(P,2)+1
             end
@@ -259,8 +259,8 @@ function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
         end
         push!(F,nf)
     end
-    m.points=P
-    m.faces =F
+    m.points = P
+    m.faces  = F
 end
 
 
