@@ -1,4 +1,4 @@
-    export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, hedge, face,
+export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, hedge, face,
     point_of, ptidx_of, face_of,
     push_vertex!, push_edge!, push_face!,
     split_edge!, set_face!, split_face!, glue_edge!, length_face,
