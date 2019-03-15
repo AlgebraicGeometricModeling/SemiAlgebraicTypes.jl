@@ -13,7 +13,7 @@ mutable struct HEdge
     prev::Int64
     opp::Int64
     face::Int64
-
+    
     function HEdge()
         new(0,0,0,0,0)
     end
@@ -37,10 +37,11 @@ mutable struct HMesh
     edges ::Vector{HEdge}
     faces ::Vector{Int64}
     normals::Matrix{Float64}
+    ccw_e  ::Vector{Vector{Int64}}
     attr  ::Dict{Symbol,Any}
 
     function HMesh()
-        new(Matrix{Float64}(undef,3,0), HEdge[], Int64[], Matrix{Float64}(undef,3,0), Dict{Symbol,Any}())
+        new(Matrix{Float64}(undef,3,0), HEdge[], Int64[], Matrix{Float64}(undef,3,0), Vector{Vector{Int64}}(undef,0), Dict{Symbol,Any}())
     end
 
     function HMesh(pts::AbstractArray{Float64,2},
@@ -48,7 +49,7 @@ mutable struct HMesh
                    f::Vector{Vector{Int64}},
                    normals::Matrix{Float64},
                    attr::Dict{Symbol,Any})
-        new(pts,e,f,normals,attr)
+        new(pts,e,f,normals,Vector{Vector{Int64}}(undef,0),attr)
     end
 end
 
@@ -309,14 +310,14 @@ end
 """
     Subdivide each face by inserting the middle of the edges and the middle of the faces.
 """
-function subdivide_middle!(m)
+function subdivide_middle!(m::HMesh)
     N = nbv(m)
     E = nbe(m)
     for e in 1:E
         p1 = edge(m,e).point
         p2 = edge(m,edge(m,e).next).point
 
-        if p1<= N && p2<= N
+        if p1 <= N && p2 <= N
             P =  (m.points[:,p1]+m.points[:,p2])/2.0
             p = push_vertex!(m,P)
             split_edge!(m, e, p)

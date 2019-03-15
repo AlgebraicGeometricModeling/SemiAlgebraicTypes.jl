@@ -1,4 +1,4 @@
-export Mesh, Edge, Face, mesh, getindex, nbv, nbe, nbf,
+export Mesh, Edge, Face, mesh, copy, getindex, nbv, nbe, nbf,
     point, edge, face, normal,
     push_vertex!, push_edge!, push_face!, push_normal!,
     remove_doublon!,
@@ -75,6 +75,10 @@ function mesh(L::Vector{Vector{T}},
     m = Mesh{T}(P,E,F,N, Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
+end
+
+function Base.copy(m:: Mesh{T}) where T
+  return Mesh{T}(copy(m.points), copy(m.edges), copy(m.faces), copy(m.normals), m.attr)
 end
 
 function getindex(m::Mesh{T}, s::Symbol) where T
