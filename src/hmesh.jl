@@ -495,7 +495,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
         v = val[p]
         if bde[p] == 0
             # Interior point
-            msh.points[:,p] .*= ((v-2.0)/v) #((v-2)/v)
+            msh.points[:,p] .*= ((v-2.5)/v) #((v-2)/v)
         elseif val[p] == 1
             #println(":: vertex corner point ", p)
             #NwPoints[:,p] = msh.points[:,p]
@@ -513,7 +513,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
         if bde[p] == 0
             # Not a boundary point
             v = val[p]
-            msh.points[:,p] += point(msh, pte[e])*(1.0/(v*v))
+            msh.points[:,p] += point(msh, pte[e])*(1.5/(v*v))
             f = edge(msh,e).face
             msh.points[:,p] += point(msh, ptf[f])*(1.0/(v*v))
         elseif bde[p] != 0 && val[p] != 1
