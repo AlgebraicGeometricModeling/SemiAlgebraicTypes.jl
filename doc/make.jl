@@ -5,7 +5,6 @@ Expl = [];
 Code = ["code.md", "mesh.md"];
 
 makedocs(
-         format = :html,
          sitename = "SemiAlgebraicTypes.jl",
          authors = "B. Mourrain",
          modules = [SemiAlgebraicTypes],
@@ -20,12 +19,12 @@ makedocs(
          doctest = false
          )
 
-deploydocs(
-           deps = Deps.pip("mkdocs", "python-markdown-math"),
-           repo = "gitlab.inria.fr/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git",
-           target = "site",
-           julia  = "0.6",
-           osname = "osx",
-           deps = nothing,
-           make = nothing
-           )
+#deploydocs(
+#           deps = Deps.pip("mkdocs", "python-markdown-math"),
+#           repo = "gitlab.inria.fr/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git",
+#           target = "site",
+#           julia  = "0.6",
+#           osname = "osx",
+#           deps = nothing,
+#           make = nothing
+#           )

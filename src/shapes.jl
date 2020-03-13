@@ -3,6 +3,7 @@ export Line, Sphere, Cylinder, Cone, point, sphere, line, cylinder, cone
 point() = Float64[0.0,0.0,0.0]
 point(x ::T, y::T) where T = T[x,y]
 point(x ::T, y::T, z::T) where T = T[x,y,z]
+
 #----------------------------------------------------------------------
 """
 ```
@@ -10,7 +11,6 @@ Line{T}
 ```
 Line represented by two points.
 """
-
 mutable struct Line{T}
     pt0 :: Vector{T}
     pt1 :: Vector{T}

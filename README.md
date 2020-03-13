@@ -4,7 +4,7 @@ To install the package within julia:
 
 ```julia
 using Pkg
-Pkg.clone("https://gitlab.inria.fr/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git")
+Pkg.add(PackageSpec(url="https://gitlab.inria.fr/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git"))
 ```
 
 
