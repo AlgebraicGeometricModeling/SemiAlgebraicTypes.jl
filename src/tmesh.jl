@@ -1,6 +1,5 @@
-using SemiAlgebraicTypes
-
 export next
+
 import SemiAlgebraicTypes: nbv, push_vertex!, push_edge!, push_face!
 
 ######################################################################

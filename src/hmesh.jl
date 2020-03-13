@@ -2,14 +2,14 @@ export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, hedge, face,
     point_of, ptidx_of, face_of,
     push_vertex!, push_edge!, push_face!,
     split_edge!, set_face!, split_face!, glue_edge!, length_face,
-    prev, opp, face, next, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!,
+    next, prev, opp, face, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!,
     cc_subdivide!
 
 import Base: getindex, setindex!, print
 
 mutable struct HEdge
     point::Int64
-    next::Int64
+    nxt::Int64
     prev::Int64
     opp::Int64
     face::Int64
@@ -23,11 +23,11 @@ mutable struct HEdge
     end
 
     function HEdge(e::HEdge)
-        new(e.point,e.next,e.prev,e.opp,e.face)
+        new(e.point,e.nxt,e.prev,e.opp,e.face)
     end
 
     function copy(e::HEdge)
-        new(e.point,e.next,e.prev,e.opp,e.face)
+        new(e.point,e.nxt,e.prev,e.opp,e.face)
     end
 
 end
@@ -131,16 +131,16 @@ end
 function length_face(msh::HMesh, f)
     ef = msh.faces[f]
     c = 1
-    e = edge(msh,ef).next
+    e = edge(msh,ef).nxt
     while e != ef
-        e = edge(msh,e).next
+        e = edge(msh,e).nxt
         c +=1
     end
     return c
 end
 
 function next(m::HMesh, e::Int64)
-    m.edges[e].next
+    m.edges[e].nxt
 end
 
 function opp(m::HMesh, e::Int64)
@@ -163,7 +163,7 @@ function push_face!(m::HMesh, F::Array{Int64})
     for i in 1:length(F)
         e = HEdge()
         e.point= F[i]
-        e.next = ne+i%length(F)+1
+        e.nxt = ne+i%length(F)+1
         if i == 1
             e.prev = ne+length(F)
         else
@@ -178,10 +178,10 @@ end
 function push_face!(m::HMesh, p1::Int64, p2::Int64, p3::Int64, p4::Int64)
     ne = nbe(m)
     f = nbf(m)+1
-    e1 = HEdge(); e1.point=p1; e1.next=ne+2; e1.prev=ne+4; e1.face=f
-    e2 = HEdge(); e2.point=p2; e2.next=ne+3; e2.prev=ne+1; e2.face=f
-    e3 = HEdge(); e3.point=p3; e3.next=ne+4; e3.prev=ne+2; e3.face=f
-    e4 = HEdge(); e4.point=p4; e4.next=ne+1; e4.prev=ne+3; e4.face=f
+    e1 = HEdge(); e1.point=p1; e1.nxt=ne+2; e1.prev=ne+4; e1.face=f
+    e2 = HEdge(); e2.point=p2; e2.nxt=ne+3; e2.prev=ne+1; e2.face=f
+    e3 = HEdge(); e3.point=p3; e3.nxt=ne+4; e3.prev=ne+2; e3.face=f
+    e4 = HEdge(); e4.point=p4; e4.nxt=ne+1; e4.prev=ne+3; e4.face=f
     push_edge!(m,e1)
     push_edge!(m,e2)
     push_edge!(m,e3)
@@ -206,8 +206,8 @@ function split_edge!(msh, e, p)
 
     ne = push_edge!(msh,NE)
     
-    edge(msh,edge(msh,e).next).prev = ne
-    edge(msh,e).next = ne
+    edge(msh,edge(msh,e).nxt).prev = ne
+    edge(msh,e).nxt = ne
 
     if o != 0
 
@@ -217,8 +217,8 @@ function split_edge!(msh, e, p)
         
         no = push_edge!(msh,NO)
 
-        edge(msh,edge(msh,o).next).prev = no
-        edge(msh,o).next = no
+        edge(msh,edge(msh,o).nxt).prev = no
+        edge(msh,o).nxt = no
 
         edge(msh,no).opp = e
         edge(msh,e).opp = no
@@ -226,7 +226,7 @@ function split_edge!(msh, e, p)
         edge(msh,ne).opp = o
         edge(msh,o).opp = ne
 
-        edge(msh,edge(msh,no).prev).next = no
+        edge(msh,edge(msh,no).prev).nxt = no
 
     end
 end
@@ -234,10 +234,10 @@ end
 function set_face!(msh, e0, f)
     e = e0
     edge(msh,e).face = f
-    e = edge(msh,e0).next
+    e = edge(msh,e0).nxt
     while e != e0
         edge(msh,e).face = f
-        e = edge(msh,e).next
+        e = edge(msh,e).nxt
     end
 end
 
@@ -254,7 +254,7 @@ function split_face!(m, fidx, v1,  v2)
     e1 = ef
     p  = edge(m,e1).point
     while p != v1 
-        e1 = edge(m,e1).next
+        e1 = edge(m,e1).nxt
         (e1 == ef) && break   
         p  = edge(m,e1).point
         # println("  e1  ", e1)
@@ -266,7 +266,7 @@ function split_face!(m, fidx, v1,  v2)
     e2 = e1
     p = edge(m,e2).point
     while p != v2
-        e2 = edge(m,e2).next
+        e2 = edge(m,e2).nxt
         (e2 == e1) && break
         p  = edge(m,e2).point
     end
@@ -278,8 +278,8 @@ function split_face!(m, fidx, v1,  v2)
     E1 = HEdge(edge(m,e1))
     E2 = HEdge(edge(m,e2))
 
-    E1.next = e2
-    E2.next = e1
+    E1.nxt = e2
+    E2.nxt = e1
 
     E1.face = nbf(m)+1
     E2.face = fidx
@@ -290,8 +290,8 @@ function split_face!(m, fidx, v1,  v2)
     edge(m,ne1).opp = ne2
     edge(m,ne2).opp = ne1
 
-    edge(m,edge(m,e1).prev).next = ne1
-    edge(m,edge(m,e2).prev).next = ne2
+    edge(m,edge(m,e1).prev).nxt = ne1
+    edge(m,edge(m,e2).prev).nxt = ne2
 
     edge(m,e1).prev = ne2
     edge(m,e2).prev = ne1
@@ -315,7 +315,7 @@ function subdivide_middle!(m::HMesh)
     E = nbe(m)
     for e in 1:E
         p1 = edge(m,e).point
-        p2 = edge(m,edge(m,e).next).point
+        p2 = edge(m,edge(m,e).nxt).point
 
         if p1 <= N && p2 <= N
             P =  (m.points[:,p1]+m.points[:,p2])/2.0
@@ -329,10 +329,10 @@ function subdivide_middle!(m::HMesh)
         if edge(m,e0).point > N
             push!(M, edge(m,e0).point)
         end
-        e = edge(m,e0).next
+        e = edge(m,e0).nxt
         while e != e0
             if edge(m,e).point > N push!(M, edge(m,e).point)  end
-            e = edge(m,e).next
+            e = edge(m,e).nxt
         end
         split_face!(m, f, M[1], M[3] )
         nf = nbf(m)
