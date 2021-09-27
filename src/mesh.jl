@@ -1,10 +1,10 @@
 export Mesh, Edge, Face, mesh, copy, getindex, nbv, nbe, nbf,
     point, edge, face, normal,
     push_vertex!, push_edge!, push_face!, push_normal!,
-    remove_doublon!,
+    remove_doublon!, 
     cube
 
-import Base: push!, getindex, setindex!, print
+import Base: push!, getindex, setindex!, print, join
 #----------------------------------------------------------------------
 const Edge = Vector{Int64}
 const Face = Vector{Int64}
@@ -188,6 +188,99 @@ function normal(m::Mesh{T}, i::Int64) where T
 end
 #----------------------------------------------------------------------
 """
+Replace duplicate points which are within distance eps by a single point.
+
+The default value for eps is 1.e-3.
+
+Warning: The normals are not aken into account.
+"""
+function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
+    P = Matrix{Float64}(undef,3,0)
+    Idx = fill(0,nbv(m))
+    c = 1
+    for i in 1:nbv(m)
+        Idx[i]=i
+        pt = m.points[:,i]
+        for j in 1:size(P,2)
+            if LinearAlgebra.norm(P[:,j]-pt) < eps
+                Idx[i]=j
+                j = size(P,2)+1
+            end
+        end
+        if Idx[i] == i
+            P = hcat(P,pt)
+            Idx[i] = c
+            c+=1
+        end
+    end
+
+    E = Vector{Int64}[]
+    for e in m.edges
+        ne = Int64[]
+        for i in e
+            push!(ne, Idx[i])
+        end
+        push!(E,ne)
+    end
+    
+    F = Vector{Int64}[]
+    for f in m.faces
+        nf = Int64[]
+        for i in f
+            push!(nf, Idx[i])
+        end
+        push!(F,nf)
+    end
+
+    m.points = P
+    m.edges  = E
+    m.faces  = F
+end
+
+#----------------------------------------------------------------------
+"""
+```
+join(M::Mesh{Float64}...)
+```
+Join the meshes M into a single mesh.
+
+"""
+function Base.join(M::Mesh{Float64}...)
+
+  
+    m = mesh(Float64)
+    m.points = hcat([mi.points for mi in M]...)
+    m.edges  = vcat([mi.edges for mi in M]...)
+    m.faces  = vcat([mi.faces for mi in M]...)
+    m.normals= hcat([mi.normals for mi in M]...)
+
+    nv = nbv(M[1])
+    ne = nbe(M[1])
+    nf = nbf(M[1])
+
+    for k in 2:length(M)
+        for i in ne+1:ne+nbe(M[k])
+            for j in 1:length(m.edges[i])
+                m.edges[i][j] += nv
+            end
+        end
+
+        for i in nf+1:nf+nbf(M[k])
+            for j in 1:length(m.faces[i])
+                m.faces[i][j] += nv
+            end
+        end
+        nv += nbv(M[k])
+        ne += nbe(M[k])
+        nf += nbf(M[k])
+    end
+    #remove_doublon!(m)
+    return m
+end  
+
+
+#----------------------------------------------------------------------
+"""
 ```
 cube(c::Vector{T},r::T)
 ```
@@ -229,44 +322,6 @@ function cube(c::Vector{T}, r::T; args...) where T
     for arg in args m[arg[1]]=arg[2] end
     return m
 end
-
-"""
-Replace duplicate points which are within distance eps by a single point.
-
-The default value for eps is 1.e-3
-"""
-function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
-    P = Matrix{Float64}(undef,3,0)
-    Idx = fill(0,nbv(m))
-    c = 1
-    for i in 1:nbv(m)
-        Idx[i]=i
-        pt = m.points[:,i]
-        for j in 1:size(P,2)
-            if norm(P[:,j]-pt) < eps
-                Idx[i]=j
-                j = size(P,2)+1
-            end
-        end
-        if Idx[i] == i
-            P = hcat(P,pt)
-            Idx[i] = c
-            c+=1
-        end
-    end
-
-    F = Vector{Int64}[]
-    for f in m.faces
-        nf = Int64[]
-        for i in f
-            push!(nf, Idx[i])
-        end
-        push!(F,nf)
-    end
-    m.points = P
-    m.faces  = F
-end
-
 
 """
 ```

@@ -2,8 +2,11 @@
 # Code adapted from https://github.com/TheBB/NURBS.jl package.
 #
 
-export BSplineBasis, BSplineFunction1D, BSplineFunction2D, BSplineFunction3D,
-    domain, supported, eval_rng
+export BSplineBasis,
+    BSplineFunction1D, BSplineFunction2D, BSplineFunction3D,
+    BSplineCurve, BSplineSurface, BSplineVolume,
+    domain, supported, eval_rng,
+    mesh
 
 
 mutable struct BSplineBasis
@@ -108,8 +111,6 @@ function eval_rng(b::BSplineBasis, t::T, deriv::Int = 0 ) where {T<:Real}
 end
 
 
-
-
 #----------------------------------------------------------------------
 mutable struct BSplineFunction1D
     points::Array{Float64,2}
@@ -151,6 +152,7 @@ function (f::BSplineFunction2D)(u::T,v::T, d1=0, d2=0) where {T<:Real}
             (r2,i2) in zip(rng2,1:length(v2)))
 end
 
+domain(f::BSplineFunction2D) = [domain(f.basis1),domain(f.basis2)]
 #----------------------------------------------------------------------
 mutable struct BSplineFunction3D <: Function
     points::Array{Float64,4}
@@ -168,4 +170,101 @@ function (f::BSplineFunction3D)(u::T,v::T,w::T) where {T<:Real}
     v2,rng2 = eval_rng(f.basis2,v)
     v3,rng3 = eval_rng(f.basis3,w)
         sum(f.points[:,r1,r2,r3]*v1[i1]*v2[i2]*v3[i3] for (r1,i1) in zip(rng1, 1:length(v1)), (r2,i2) in zip(rng2, 1:length(v2)), (r3,i3) in zip(rng3, 1:length(v3)))
+end
+
+domain(f::BSplineFunction3D) = [domain(f.basis1),domain(f.basis2),domain(f.basis3)]
+#----------------------------------------------------------------------
+#----------------------------------------------------------------------
+mutable struct BSplineCurve
+    map ::BSplineFunction1D
+    attr::Dict{Symbol,Any}
+
+    function BSplineCurve(points, knots, order, extend=true)
+        map = BSplineFunction1D(points,knots,order,extend)
+        new(map, Dict{Symbol,Any}())
+    end
+
+    function BSplineCurve(points, bs::BSplineBasis; args...)
+        dict =  Dict{Symbol,Any}()
+        for arg in args
+            dict[arg[1]]=arg[2]
+        end
+        new( BSplineFunction1D(points, bs), dict)
+    end
+
+    function BSplineCurve(points, bs::BSplineBasis, dict::Dict{Symbol,Any})
+        new( BSplineFunction1D(points, bs), dict)
+    end
+end
+
+function Base.getindex(f::BSplineCurve, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineCurve, v, s::Symbol)  f.attr[s] = v end
+
+#----------------------------------------------------------------------
+mutable struct BSplineSurface
+    map  ::BSplineFunction2D
+    attr ::Dict{Symbol,Any}
+
+    function BSplineSurface(points, bs1::BSplineBasis, bs2::BSplineBasis; args...)
+        dict =  Dict{Symbol,Any}()
+        for arg in args
+            dict[arg[1]]=arg[2]
+        end
+        new(BSplineFunction2D(points,bs1,bs2), dict)
+    end
+    
+    function BSplineSurface(points, bs1::BSplineBasis, bs2::BSplineBasis, dict::Dict{Symbol,Any})
+        new(BSplineFunction2D(points, bs1, bs2), dict)
+    end
+end
+
+function Base.getindex(f::BSplineSurface, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineSurface, v, s::Symbol)  f.attr[s] = v end
+
+#----------------------------------------------------------------------
+mutable struct BSplineVolume
+    map  ::BSplineFunction3D
+    attr ::Dict{Symbol,Any}
+
+    function BSplineVolume(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis; args...)
+        dict =  Dict{Symbol,Any}()
+        for arg in args
+            dict[arg[1]]=arg[2]
+        end
+        new(BSplineFunction3D(points,bs1,bs2,bs3), dict)
+    end
+    
+    function BSplineVolume(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis, dict::Dict{Symbol,Any})
+        new(BSplineFunction3D(points, bs1, bs2, bs3), dict)
+    end
+end
+
+function Base.getindex(f::BSplineVolume, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineVolume, v, s::Symbol)  f.attr[s] = v end
+
+
+
+#----------------------------------------------------------------------
+function mesh(b::BSplineSurface, N::Int=50; args...)
+    f = b.map
+    D = domain(f)
+    rx = LinRange(D[1][1],D[1][2],N)
+    ry = LinRange(D[2][1],D[2][2],N) 
+
+    f = b.map
+    m = SemiAlgebraicTypes.mesh(Float64)
+    for x in rx
+        for y in ry
+            push_vertex!(m,f(x,y))
+        end
+    end
+    for i in 1:N-1
+        for j in 1:N-1
+            push_face!(m,[(i-1)*N+(j-1)+1, (i-1)*N+(j)+1, (i)*N+(j)+1, (i)*N+j])
+        end
+    end
+    for arg in args
+        m[arg[1]]=arg[2]
+    end
+    return m
 end
