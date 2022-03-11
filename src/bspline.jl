@@ -200,6 +200,14 @@ end
 function Base.getindex(f::BSplineCurve, s::Symbol)  get(f.attr, s, 0) end
 function Base.setindex!(f::BSplineCurve, v, s::Symbol)  f.attr[s] = v end
 
+function (f::BSplineCurve)(u::T) where {T<:Real}
+    return f.map(u)
+end
+
+function (f::BSplineCurve)(u::Vector{T}) where {T<:Real}
+    return f.map(u[1])
+end
+
 #----------------------------------------------------------------------
 mutable struct BSplineSurface
     map  ::BSplineFunction2D
@@ -221,6 +229,13 @@ end
 function Base.getindex(f::BSplineSurface, s::Symbol)  get(f.attr, s, 0) end
 function Base.setindex!(f::BSplineSurface, v, s::Symbol)  f.attr[s] = v end
 
+function (f::BSplineSurface)(u::T, v::T) where {T<:Real}
+    return f.map(u,v)
+end
+
+function (f::BSplineSurface)(P::Vector{T}) where {T<:Real}
+    return f.map(P[1],P[2])
+end
 #----------------------------------------------------------------------
 mutable struct BSplineVolume
     map  ::BSplineFunction3D
@@ -242,7 +257,13 @@ end
 function Base.getindex(f::BSplineVolume, s::Symbol)  get(f.attr, s, 0) end
 function Base.setindex!(f::BSplineVolume, v, s::Symbol)  f.attr[s] = v end
 
+function (f::BSplineVolume)(u::T, v::T, w::T) where {T<:Real}
+    return f.map(u,v,w)
+end
 
+function (f::BSplineVolume)(P::Vector{T}) where {T<:Real}
+    return f.map(P[1],P[2],P[3])
+end
 
 #----------------------------------------------------------------------
 function mesh(b::BSplineSurface, N::Int=50; args...)
