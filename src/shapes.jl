@@ -1,4 +1,4 @@
-export Line, Sphere, Cylinder, Cone, point, sphere, line, cylinder, cone
+export Line, Sphere, Cylinder, Cone, Ellipsoid, point, sphere, line, cylinder, cone, ellipsoid
 
 point() = Float64[0.0,0.0,0.0]
 point(x ::T, y::T) where T = T[x,y]
@@ -109,3 +109,31 @@ function Base.setindex!(m::Cone{T}, v, s::Symbol) where T
 end
 
 #----------------------------------------------------------------------
+"""
+```
+Ellipsoid{T}
+```
+Ellipsoid represented by 
+ - c the center 
+ - sx, sy, sz semi-axes 
+"""
+mutable struct Ellipsoid{T}
+    c::Vector{T}
+    sx::Vector{T}
+    sy::Vector{T}
+    sz::Vector{T}
+    attr::Dict{Symbol,Any}
+end
+
+function ellipsoid(c::Vector{T},sx::Vector{T},sy::Vector{T},sz::Vector{T};args...) where T
+    m = Ellipsoid(c,sx,sy,sz,Dict{Symbol,Any}())
+    for arg in args m[arg[1]]=arg[2] end
+    m
+end
+
+function Base.getindex(m::Ellipsoid{T}, s::Symbol) where T
+    Base.get(m.attr, s, 0)
+end
+function Base.setindex!(m::Ellipsoid{T}, v, s::Symbol) where T
+    m.attr[s] = v
+end
