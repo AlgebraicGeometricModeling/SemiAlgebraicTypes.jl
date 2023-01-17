@@ -5,13 +5,13 @@
 export BSplineBasis,
     BSplineFunction1D, BSplineFunction2D, BSplineFunction3D,
     BSplineCurve, BSplineSurface, BSplineVolume,
-    domain, supported, eval_rng,
+    domain, supported, eval_rng, knots,
     mesh
 
 
 mutable struct BSplineBasis
 
-    knots::Vector{Float64}
+    knots::Vector
     order::Int
 
     function BSplineBasis(knots, order, extend=true)
@@ -78,12 +78,31 @@ macro bs_er_scale(bvals, knots, mid, num)
     :($bvals ./= $knots[$mid:$mid+$num] - $knots[$mid-$num-1:$mid-1])
 end
 
+"""
+``` knots(d,N,μ,a,b) ```
+
+    Compute the knot sequence of degree d, of multiplicity μ with N equally spaced subintervals between a and b.
+    The default values are  μ=1, a=1.0, b=1.0.
+"""
+function knots(d,N, μ=1, a=0.0, b=1.0)
+    kn = [a]
+
+    for i in 1:d push!(kn,a) end
+    for i in 1:N-1
+        for k in 1:μ
+            push!(kn, a + (b-a)*(i//N))
+        end
+    end
+    for i in 1:(d+1) push!(kn,b) end
+    return kn
+end
+
 function eval_rng(b::BSplineBasis, t::T, deriv::Int = 0 ) where {T<:Real}
     rng = supported(b, t)
 
     # Basis values of order 1 (piecewise constants)
-    bvals = zeros(Float64, b.order)
-    bvals[end] = 1.0
+    bvals = zeros(typeof(b.knots[1]), b.order)
+    bvals[end] = 1
 
     p = b.order
     bi = rng.start + p
