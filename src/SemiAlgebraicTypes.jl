@@ -8,4 +8,6 @@ include("hmesh.jl")
 include("tmesh.jl")
 include("bspline.jl")
 
+include("color.jl")
+
 end

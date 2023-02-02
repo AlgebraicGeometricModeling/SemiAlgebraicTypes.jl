@@ -337,8 +337,8 @@ function face_orientation(m::Mesh{T}) where T
         s = norm(n)
         n/= s
         r = sqrt(s)/40
-        push!(R, cylinder(p, p+3*r*n,r/2; color=Axl.red))
-        push!(R, cone(p+6*r*n,p+3*r*n,r; color=Axl.red))
+        push!(R, cylinder(p, p+3*r*n,r/2; color=Color(255,0,0)))
+        push!(R, cone(p+6*r*n,p+3*r*n,r; color=Color(255,0,0)))
     end
     return R
 end
