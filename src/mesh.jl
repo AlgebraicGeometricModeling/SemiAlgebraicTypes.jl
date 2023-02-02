@@ -323,6 +323,27 @@ function cube(c::Vector{T}, r::T; args...) where T
     return m
 end
 
+export face_orientation
+"""
+Compute a sequence of arrows starting at the center of each face and pointing in the direction of the oriented normal to the face (cross product of 2 first edge vectors).
+
+The size of the arrow is proportional to the area of the triangl of the 3 first points of the face.
+"""
+function face_orientation(m::Mesh{T}) where T
+    R = Any[]
+    for f in m.faces
+        p = (m.points[:,f]*fill(1.0,length(f)))/length(f)
+        n = cross(m.points[:,f[2]] - m.points[:,f[1]], m.points[:,f[3]] - m.points[:,f[2]])
+        s = norm(n)
+        n/= s
+        r = sqrt(s)/40
+        push!(R, cylinder(p, p+3*r*n,r/2; color=Axl.red))
+        push!(R, cone(p+6*r*n,p+3*r*n,r; color=Axl.red))
+    end
+    return R
+end
+
+
 """
 ```
 cube(p1::Vector{T}, p2::Vector{T})
