@@ -280,24 +280,25 @@ end
 
 
 #----------------------------------------------------------------------
+export box
 """
 ```
-cube(c::Vector{T},r::T)
+box(c::Vector{T}, r::Vector)
 ```
-Compute the mesh corresponding to a cube aligned with the axes and centered
+Compute the mesh corresponding to a box aligned with the axes and centered
 at the point c of size 2r.
 """
-function cube(c::Vector{T}, r::T; args...) where T
+function box(c::Vector{T}, r::Vector; args...) where T
     m = mesh(T)
-    push_vertex!(m,c+[-r,-r,-r])
-    push_vertex!(m,c+[r,-r,-r])
-    push_vertex!(m,c+[r,r,-r])
-    push_vertex!(m,c+[-r,r,-r])
+    push_vertex!(m,c+[-r[1],-r[2],-r[3]])
+    push_vertex!(m,c+[r[1],-r[2],-r[3]])
+    push_vertex!(m,c+[r[1],r[2],-r[3]])
+    push_vertex!(m,c+[-r[1],r[2],-r[3]])
 
-    push_vertex!(m,c+[-r,-r,r])
-    push_vertex!(m,c+[r,-r,r])
-    push_vertex!(m,c+[r,r,r])
-    push_vertex!(m,c+[-r,r,r])
+    push_vertex!(m,c+[-r[1],-r[2],r[3]])
+    push_vertex!(m,c+[r[1],-r[2],r[3]])
+    push_vertex!(m,c+[r[1],r[2],r[3]])
+    push_vertex!(m,c+[-r[1],r[2],r[3]])
 
     push_edge!(m, [1,2])
     push_edge!(m, [2,3])
@@ -323,11 +324,27 @@ function cube(c::Vector{T}, r::T; args...) where T
     return m
 end
 
+#----------------------------------------------------------------------
+export cube
+"""
+```
+cube(c::Vector{T}, r::T)
+```
+Compute the mesh corresponding to a cube aligned with the axes and centered
+at the point c of size 2r.
+"""
+function cube(c::Vector{T}, r; args...) where T
+    m = box(c,fill(r,3); args...)
+    
+end
+
 export face_orientation
 """
-Compute a sequence of arrows starting at the center of each face and pointing in the direction of the oriented normal to the face (cross product of 2 first edge vectors).
+```face_orientation( m::Mesh{T} )```
 
-The size of the arrow is proportional to the area of the triangl of the 3 first points of the face.
+Compute a sequence of arrows starting at the barycenter of each face and pointing in the direction of the oriented normal to the face (cross product of 2 first edge vectors).
+
+The size of the arrow is proportional to the sqrt of the area of the triangle formed by the 3 first points of the face.
 """
 function face_orientation(m::Mesh{T}) where T
     R = Any[]
