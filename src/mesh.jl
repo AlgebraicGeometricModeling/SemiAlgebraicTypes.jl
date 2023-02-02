@@ -1,8 +1,8 @@
-export Mesh, Edge, Face, mesh, copy, getindex, nbv, nbe, nbf,
+export Mesh, Edge, Face, mesh, copy, getindex,
+    nbv, nbe, nbf,
     point, edge, face, normal,
     push_vertex!, push_edge!, push_face!, push_normal!,
-    remove_doublon!, 
-    cube
+    remove_doublon!
 
 import Base: push!, getindex, setindex!, print, join
 #----------------------------------------------------------------------
