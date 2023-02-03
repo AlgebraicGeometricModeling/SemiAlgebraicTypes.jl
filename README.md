@@ -4,7 +4,7 @@ To install the package within julia:
 
 ```julia
 ] # key to switch to the pkg mode
-add https://gitlab.inria.fr/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git
+add https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git
 ```
 
 
