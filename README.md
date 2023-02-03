@@ -3,10 +3,9 @@ The package `SemiAlgebraicTypes.jl` provides implementation of semialgebraic set
 To install the package within julia:
 
 ```julia
-] # key to switch to the pkg mode
-add https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git
+] add https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git
 ```
-
+(`]` key switches to the pkg mode)
 
 To use it within julia:
 
