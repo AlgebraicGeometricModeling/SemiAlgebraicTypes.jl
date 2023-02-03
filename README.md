@@ -30,4 +30,4 @@ f1 = BSplineFunction1D(rand(3,5), B1)
 f2 = BSplineFunction2D(rand(3,5,4), B1,B2)
 ```
 
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://AlgebraicGeometricModeling.github.io/SemiAlgebraicTypes/dev)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://AlgebraicGeometricModeling.github.io/SemiAlgebraicTypes.jl)
