@@ -19,7 +19,7 @@ makedocs(
          )
 
 deploydocs(
-    root = "../docs",
+    root = "docs",
     repo = "github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl",
     devbranch = "master",
     push_preview = true
