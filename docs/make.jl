@@ -1,17 +1,17 @@
 using Documenter, SemiAlgebraicTypes
 
 Expl = []; 
-Code = ["code.md", "mesh.md"];
+Code = ["basic.md", "mesh.md", "attributes.md"];
 
 makedocs(
          sitename = "SemiAlgebraicTypes.jl",
          authors = "B. Mourrain",
          modules = [SemiAlgebraicTypes],
-         build = "html",
+         build = "SemiAlgebraicTypes.jl/docs",
          source = "mrkd",
          pages = Any[
                      "Home" => "index.md",
-                     "Example" => Expl,
+#                     "Example" => Expl,
                      "SemiAlgebraic types" => Code
                      ],
          repo = "https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl",
@@ -19,9 +19,10 @@ makedocs(
          )
 
 deploydocs(
-    root = "docs",
+#    root = "docs",
     repo = "github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl",
-    devbranch = "master",
+    target = "build",
+#    devbranch = "master",
     push_preview = true
 )
 

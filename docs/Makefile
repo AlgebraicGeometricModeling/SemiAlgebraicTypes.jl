@@ -1,4 +1,8 @@
-all: 
+all: SemiAlgebraicTypes.jl
 	julia --color=yes make.jl
-web:
-	rsync -a ./html/ ci@excalibur2.inria.fr:/var/www/html/axel/public/latest/doc/SemiAlgebraicTypes.jl
+
+SemiAlgebraicTypes.jl:
+	git clone -b gh-pages https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git
+
+publish:
+	cd SemiAlgebraicTypes.jl; git add docs; git commit -am "update gh-pages"; git push
