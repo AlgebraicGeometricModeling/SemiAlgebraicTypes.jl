@@ -1,1 +1,1 @@
-DirectoryIndex docs/index.html
+Redirect permanent / /docs
