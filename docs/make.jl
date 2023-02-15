@@ -1,7 +1,7 @@
 using Documenter, SemiAlgebraicTypes
 
 Expl = []; 
-Code = ["basic.md", "mesh.md", "attributes.md"];
+Code = ["basic.md", "mesh.md", "splines.md"];
 
 makedocs(
          sitename = "SemiAlgebraicTypes.jl",

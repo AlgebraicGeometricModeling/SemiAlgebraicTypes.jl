@@ -1,4 +1,4 @@
-# Mesh
+# [Mesh](@id mesh)
 
 ```@docs 
 SemiAlgebraicTypes.Mesh
