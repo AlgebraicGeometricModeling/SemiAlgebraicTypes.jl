@@ -1,7 +1,7 @@
 name = "SemiAlgebraicTypes"
 uuid = "94bd45ad-7a68-435f-8a71-8b2caa00d1b6"
 authors = ["mourrain <bernard.mourrain@inria.fr>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

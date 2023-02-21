@@ -10,10 +10,11 @@ makedocs(
          build = "SemiAlgebraicTypes.jl/docs",
          source = "mrkd",
          pages = Any[
-                     "Home" => "index.md",
+             "Home" => "index.md",
 #                     "Example" => Expl,
-                     "SemiAlgebraic types" => Code
-                     ],
+             "SemiAlgebraic types" => Code,
+             "Attributes" => "attributes.md",
+         ],
          repo = "https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl",
          doctest = false
          )

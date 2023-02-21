@@ -147,52 +147,73 @@ end
 
 #----------------------------------------------------------------------
 """
-Number of vertices of the mesh m
+    nbv(m)
+
+Number of vertices of the mesh `m`
 """
 nbv(m::Mesh{T}) where T = size(m.points,2)
 """
-Number of edges of the mesh m
+    nbe(m)
+
+Number of edges of the mesh `m`
 """
 nbe(m::Mesh{T}) where T = length(m.edges)
 """
-Number of faces of the mesh m
+    nbf(m)
+
+Number of faces of the mesh `m`
 """
 nbf(m::Mesh{T}) where T = length(m.faces)
 
 #----------------------------------------------------------------------
 """
- Point of index i in the mesh m, as a Vector{T}.
+    point(m::Mesh{T}, i::Int64)
+
+Point of index i in the mesh m, as a Vector{T}.
 """
 function point(m::Mesh{T}, i::Int64) where T
     return m.points[:,i]
 end
 #----------------------------------------------------------------------
 """
- Edge of index i in the mesh m, as a Vector{Int64} containing the
- indices of the vertices of the edge.
+    edge(m::Mesh{T}, i::Int64)
+
+Edge of index i in the mesh m, as a Vector{Int64} containing the
+indices of the vertices of the edge.
 """
 function edge(m::Mesh{T}, i::Int64) where T
     return m.edges[i]
 end
 #----------------------------------------------------------------------
 """
- Face of index i in the mesh m, as a Vector{Int64} containing the
- indices of the vertices on the face boundary.
+    face(m::Mesh{T}, i::Int64)
+
+Face of index i in the mesh m, as a Vector{Int64} containing the
+indices of the vertices on the face boundary.
 """
 function face(m::Mesh{T}, i::Int64) where T
     return m.faces[i]
 end
 #----------------------------------------------------------------------
+"""
+    normal(m::Mesh{T}, i::Int64)
+
+Normal at the ith point of the mesh m.
+
+**Warning**: The normals may not be defined in a mesh.
+"""
 function normal(m::Mesh{T}, i::Int64) where T
     return m.normals[:,i]
 end
 #----------------------------------------------------------------------
 """
+    remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
+
 Replace duplicate points which are within distance eps by a single point.
 
 The default value for eps is 1.e-3.
 
-Warning: The normals are not aken into account.
+Warning: The normals are not taken into account.
 """
 function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
     P = Matrix{Float64}(undef,3,0)
@@ -242,7 +263,7 @@ end
 ```
 join(M::Mesh{Float64}...)
 ```
-Join the meshes M into a single mesh.
+Join the meshes M1, M2, ... into a single mesh.
 
 """
 function Base.join(M::Mesh{Float64}...)

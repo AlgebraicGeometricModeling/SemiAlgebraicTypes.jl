@@ -54,6 +54,12 @@ mutable struct HMesh
 end
 
 """
+    hmesh(P::AbstractArray{Float64,2}, F::Vector{Vector{Int64}},N::Matrix{Float64}; args...)
+
+ -  P matrix of points
+ -  F array of faces
+ -  N (optional) matrix of normals 
+
  Build a HMesh from the array of points and array of faces
 """
 function hmesh(P::AbstractArray{Float64,2}, F::Vector{Vector{Int64}},N::Matrix{Float64}=Matrix{Float64}(undef,3,0); args...)
@@ -243,8 +249,8 @@ end
 
 
 """
-   Split the face f by inserting the edge between the vertices v1 and v2.
-   A new face is added at the end of the array of faces.
+Split the face f by inserting the edge between the vertices v1 and v2.
+A new face is added at the end of the array of faces.
 """
 function split_face!(m, fidx, v1,  v2)
 
@@ -308,7 +314,9 @@ function split_face!(m, fidx, v1,  v2)
     return nf 
 end
 """
-    Subdivide each face by inserting the middle of the edges and the middle of the faces.
+    subdivide_middle!(msh::HMesh)
+
+Subdivide each face by inserting the middle of the edges and the middle of the faces.
 """
 function subdivide_middle!(m::HMesh)
     N = nbv(m)
@@ -374,9 +382,10 @@ end
 
 
 """
-    Array of arrays E[i] of edges in Counter-Clock-Wise order, which are
-    adjacent to the edge of index i, starting from the boundary edge if
-    it exists.
+    ccw_edges(m::HMesh)
+
+Array of arrays E[i] of edges in Counter-Clock-Wise order, which are adjacent
+to the edge of index i, starting from the boundary edge if it exists.
 """
 function ccw_edges(m::HMesh)
 
@@ -424,9 +433,11 @@ end
 #----------------------------------------------------------------------
 
 """
-  Catmull-Clark subdivision of a Half-Edge mesh.
+    cc_subdivide!(msh::HMesh, n::Int64 = 1)
 
-  The mesh msh is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
+Catmull-Clark subdivision of a Half-Edge mesh.
+
+The mesh `msh` is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
 """
 function cc_subdivide!(msh::HMesh, n::Int64 = 1)
 
