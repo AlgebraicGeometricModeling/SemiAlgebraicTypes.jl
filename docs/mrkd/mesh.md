@@ -11,6 +11,10 @@ SemiAlgebraicTypes.hmesh
 ## Accessors and modificators
 
 ```@docs 
+SemiAlgebraicTypes.normal
+```
+
+```@docs 
 SemiAlgebraicTypes.push_vertex!
 ```
 
@@ -37,7 +41,6 @@ SemiAlgebraicTypes.cc_subdivide!
 ```@docs 
 SemiAlgebraicTypes.subdivide_middle!
 ```
-
 
 ```@docs 
 SemiAlgebraicTypes.remove_doublon!
@@ -76,14 +79,6 @@ SemiAlgebraicTypes.ccw_edges
 
 ```@docs 
 SemiAlgebraicTypes.join
-```
-
-```@docs 
-SemiAlgebraicTypes.box
-```
-
-```@docs 
-SemiAlgebraicTypes.cube
 ```
 
 ```@docs 

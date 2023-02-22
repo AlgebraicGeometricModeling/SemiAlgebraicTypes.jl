@@ -131,6 +131,9 @@ end
 
 
 #----------------------------------------------------------------------
+"""
+ Bspline curve with a matrix dxm of control points `points` and a `basis` . 
+"""
 mutable struct BSplineCurve <: Function
     points::Array{Float64,2}
     basis::BSplineBasis
@@ -157,6 +160,9 @@ function Base.getindex(f::BSplineCurve, s::Symbol)  get(f.attr, s, 0) end
 function Base.setindex!(f::BSplineCurve, v, s::Symbol)  f.attr[s] = v end
 
 #----------------------------------------------------------------------
+"""
+Bspline surface with a tensor dxm1xm2 of control points `points` and bases `basis1, basis2` .
+"""
 mutable struct BSplineSurface <: Function
     points::Array{Float64,3}
     basis1::BSplineBasis
@@ -182,6 +188,9 @@ function Base.getindex(f::BSplineSurface, s::Symbol)  get(f.attr, s, 0) end
 function Base.setindex!(f::BSplineSurface, v, s::Symbol)  f.attr[s] = v end
 
 #----------------------------------------------------------------------
+"""
+Bspline volume with a tensor dxm1xm2xm3 of control points `points` and bases `basis1, basis2, basis3`.
+"""
 mutable struct BSplineVolume <: Function
     points::Array{Float64,4}
     basis1::BSplineBasis

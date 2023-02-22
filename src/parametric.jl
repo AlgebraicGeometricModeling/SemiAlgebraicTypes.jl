@@ -20,10 +20,9 @@ end
 
 
 """
-Mesh of the parametric curve f: u -> [x,y,z] for u in the interval X.
+Mesh of the parametric curve f: u -> [x(u),y(u),z(u)] for u in the interval U.
 ```
 c = mesh(u->[u,sin(u^2),cos(2*u)], 0.0 => 2.0*pi, 1000; field=DistField(0.0,0.0,0.0))
-@axlview c
 ```
 """
 function mesh(f::Function, X::Pair, N::Int=100, dim::Int=3; args...)
@@ -34,10 +33,9 @@ end
 
 
 """
-Matrix of points of the parametric surface f: (u,v) -> [x,y,z] for u in the interval X, v in the interval Y.
+Matrix of points of the parametric surface f: (u,v) -> [x(u,v),y(u,v),z(u,v)] for u in the interval U, v in the interval V.
 ```
 s = sample((u,v)->[u,v,cos(2*u*v)], 0.0 => 2.0, -pi => pi)
-@axlview s
 ```
 """
 function sample(f::Function, X::Pair, Y::Pair, N::Int=100, dim:: Int=3)
@@ -56,10 +54,9 @@ end
 
 
 """
-Mesh of the parametric surface f: (u,v) -> [x,y,z] for u in the interval X, v in the interval Y.
+Mesh of the parametric surface f: (u,v) -> [x,y,z] for u in the interval U, v in the interval V.
 ```
 s = mesh((u,v)->[u,v,cos(2*u*v)], 0.0 => 2.0, -pi => pi, field=DistField(0.0,0.0,0.0))
-@axlview s
 ```
 """
 function mesh(f::Function, X::Pair, Y::Pair, N::Int=100, dim::Int=3; args...)
