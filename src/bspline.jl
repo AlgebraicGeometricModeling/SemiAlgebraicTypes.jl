@@ -3,8 +3,8 @@
 #
 
 export BSplineBasis,
-    BSplineFunction1D, BSplineFunction2D, BSplineFunction3D,
     BSplineCurve, BSplineSurface, BSplineVolume,
+#    BSplineCCurve, BSplineSSurface, BSplineVVolume,
     domain, supported, eval_rng, knots,
     mesh
 
@@ -131,39 +131,44 @@ end
 
 
 #----------------------------------------------------------------------
-mutable struct BSplineFunction1D
+mutable struct BSplineCurve <: Function
     points::Array{Float64,2}
     basis::BSplineBasis
+    attr ::Dict{Symbol,Any}
 
-    function BSplineFunction1D(points, knots, order, extend=true)
-        new(points, BSplineBasis(knots,order,extend))
+    function BSplineCurve(points, knots, order, extend=true)
+        new(points, BSplineBasis(knots,order,extend),Dict{Symbol,Any}())
     end
 
-     function BSplineFunction1D(points, bs::BSplineBasis)
-        new(points, bs)
+     function BSplineCurve(points, bs::BSplineBasis)
+        new(points, bs,Dict{Symbol,Any}())
     end
 end
 
-function (f::BSplineFunction1D)(t::T) where {T<:Real}
+function (f::BSplineCurve)(t::T) where {T<:Real}
     vals,rng = eval_rng(f.basis,t)
 
     sum(f.points[:,r]*vals[i] for (r,i) in zip(rng,1:length(vals)))
 end
 
-domain(f::BSplineFunction1D) = domain(f.basis)
+domain(f::BSplineCurve) = domain(f.basis)
+
+function Base.getindex(f::BSplineCurve, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineCurve, v, s::Symbol)  f.attr[s] = v end
 
 #----------------------------------------------------------------------
-mutable struct BSplineFunction2D <: Function
+mutable struct BSplineSurface <: Function
     points::Array{Float64,3}
     basis1::BSplineBasis
     basis2::BSplineBasis
+    attr ::Dict{Symbol,Any}
 
-    function BSplineFunction2D(points, bs1::BSplineBasis, bs2::BSplineBasis)
-        new(points,bs1,bs2)
+    function BSplineSurface(points, bs1::BSplineBasis, bs2::BSplineBasis)
+        new(points,bs1,bs2,Dict{Symbol,Any}())
     end
 end
 
-function (f::BSplineFunction2D)(u::T,v::T, d1=0, d2=0) where {T<:Real}
+function (f::BSplineSurface)(u::T,v::T, d1=0, d2=0) where {T<:Real}
     v1, rng1 = eval_rng(f.basis1,u,d1)
     v2, rng2 = eval_rng(f.basis2,v,d2)
     sum(f.points[:,r1,r2]*v1[i1]*v2[i2]
@@ -171,140 +176,136 @@ function (f::BSplineFunction2D)(u::T,v::T, d1=0, d2=0) where {T<:Real}
             (r2,i2) in zip(rng2,1:length(v2)))
 end
 
-domain(f::BSplineFunction2D) = [domain(f.basis1),domain(f.basis2)]
+domain(f::BSplineSurface) = [domain(f.basis1),domain(f.basis2)]
+
+function Base.getindex(f::BSplineSurface, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineSurface, v, s::Symbol)  f.attr[s] = v end
+
 #----------------------------------------------------------------------
-mutable struct BSplineFunction3D <: Function
+mutable struct BSplineVolume <: Function
     points::Array{Float64,4}
     basis1::BSplineBasis
     basis2::BSplineBasis
     basis3::BSplineBasis
-
-    function BSplineFunction2D(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis)
-        new(points,bs1,bs2,bs3)
+    attr ::Dict{Symbol,Any}
+    
+    function BSplineSurface(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis)
+        new(points,bs1,bs2,bs3,Dict{Symbol,Any}())
     end
 end
 
-function (f::BSplineFunction3D)(u::T,v::T,w::T) where {T<:Real}
+function (f::BSplineVolume)(u::T,v::T,w::T) where {T<:Real}
     v1,rng1 = eval_rng(f.basis1,u)
     v2,rng2 = eval_rng(f.basis2,v)
     v3,rng3 = eval_rng(f.basis3,w)
         sum(f.points[:,r1,r2,r3]*v1[i1]*v2[i2]*v3[i3] for (r1,i1) in zip(rng1, 1:length(v1)), (r2,i2) in zip(rng2, 1:length(v2)), (r3,i3) in zip(rng3, 1:length(v3)))
 end
 
-domain(f::BSplineFunction3D) = [domain(f.basis1),domain(f.basis2),domain(f.basis3)]
-#----------------------------------------------------------------------
-#----------------------------------------------------------------------
-mutable struct BSplineCurve
-    map ::BSplineFunction1D
-    attr::Dict{Symbol,Any}
+domain(f::BSplineVolume) = [domain(f.basis1),domain(f.basis2),domain(f.basis3)]
 
-    function BSplineCurve(points, knots, order, extend=true)
-        map = BSplineFunction1D(points,knots,order,extend)
-        new(map, Dict{Symbol,Any}())
-    end
-
-    function BSplineCurve(points, bs::BSplineBasis; args...)
-        dict =  Dict{Symbol,Any}()
-        for arg in args
-            dict[arg[1]]=arg[2]
-        end
-        new( BSplineFunction1D(points, bs), dict)
-    end
-
-    function BSplineCurve(points, bs::BSplineBasis, dict::Dict{Symbol,Any})
-        new( BSplineFunction1D(points, bs), dict)
-    end
-end
-
-function Base.getindex(f::BSplineCurve, s::Symbol)  get(f.attr, s, 0) end
-function Base.setindex!(f::BSplineCurve, v, s::Symbol)  f.attr[s] = v end
-
-function (f::BSplineCurve)(u::T) where {T<:Real}
-    return f.map(u)
-end
-
-function (f::BSplineCurve)(u::Vector{T}) where {T<:Real}
-    return f.map(u[1])
-end
-
-#----------------------------------------------------------------------
-mutable struct BSplineSurface
-    map  ::BSplineFunction2D
-    attr ::Dict{Symbol,Any}
-
-    function BSplineSurface(points, bs1::BSplineBasis, bs2::BSplineBasis; args...)
-        dict =  Dict{Symbol,Any}()
-        for arg in args
-            dict[arg[1]]=arg[2]
-        end
-        new(BSplineFunction2D(points,bs1,bs2), dict)
-    end
-    
-    function BSplineSurface(points, bs1::BSplineBasis, bs2::BSplineBasis, dict::Dict{Symbol,Any})
-        new(BSplineFunction2D(points, bs1, bs2), dict)
-    end
-end
-
-function Base.getindex(f::BSplineSurface, s::Symbol)  get(f.attr, s, 0) end
-function Base.setindex!(f::BSplineSurface, v, s::Symbol)  f.attr[s] = v end
-
-function (f::BSplineSurface)(u::T, v::T) where {T<:Real}
-    return f.map(u,v)
-end
-
-function (f::BSplineSurface)(P::Vector{T}) where {T<:Real}
-    return f.map(P[1],P[2])
-end
-#----------------------------------------------------------------------
-mutable struct BSplineVolume
-    map  ::BSplineFunction3D
-    attr ::Dict{Symbol,Any}
-
-    function BSplineVolume(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis; args...)
-        dict =  Dict{Symbol,Any}()
-        for arg in args
-            dict[arg[1]]=arg[2]
-        end
-        new(BSplineFunction3D(points,bs1,bs2,bs3), dict)
-    end
-    
-    function BSplineVolume(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis, dict::Dict{Symbol,Any})
-        new(BSplineFunction3D(points, bs1, bs2, bs3), dict)
-    end
-end
 
 function Base.getindex(f::BSplineVolume, s::Symbol)  get(f.attr, s, 0) end
 function Base.setindex!(f::BSplineVolume, v, s::Symbol)  f.attr[s] = v end
 
-function (f::BSplineVolume)(u::T, v::T, w::T) where {T<:Real}
-    return f.map(u,v,w)
+#----------------------------------------------------------------------
+#=
+
+#----------------------------------------------------------------------
+mutable struct BSplineCCurve
+    map ::BSplineCurve
+    attr::Dict{Symbol,Any}
+
+    function BSplineCCurve(points, knots, order, extend=true)
+        map = BSplineCurve(points,knots,order,extend)
+        new(map, Dict{Symbol,Any}())
+    end
+
+    function BSplineCCurve(points, bs::BSplineBasis; args...)
+        dict =  Dict{Symbol,Any}()
+        for arg in args
+            dict[arg[1]]=arg[2]
+        end
+        new( BSplineCurve(points, bs), dict)
+    end
+
+    function BSplineCCurve(points, bs::BSplineBasis, dict::Dict{Symbol,Any})
+        new( BSplineCurve(points, bs), dict)
+    end
 end
 
-function (f::BSplineVolume)(P::Vector{T}) where {T<:Real}
-    return f.map(P[1],P[2],P[3])
+function Base.getindex(f::BSplineCCurve, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineCCurve, v, s::Symbol)  f.attr[s] = v end
+
+function (f::BSplineCCurve)(u::T) where {T<:Real}
+    return f.map(u)
+end
+
+function (f::BSplineCCurve)(u::Vector{T}) where {T<:Real}
+    return f.map(u[1])
 end
 
 #----------------------------------------------------------------------
-function mesh(b::BSplineSurface, N::Int=50; args...)
-    f = b.map
-    D = domain(f)
-    rx = LinRange(D[1][1],D[1][2],N)
-    ry = LinRange(D[2][1],D[2][2],N) 
+mutable struct BSplineSSurface
+    map  ::BSplineSurface
+    attr ::Dict{Symbol,Any}
 
-    f = b.map
-    m = SemiAlgebraicTypes.mesh(Float64)
-    for x in rx
-        for y in ry
-            push_vertex!(m,f(x,y))
+    function BSplineSSurface(points, bs1::BSplineBasis, bs2::BSplineBasis; args...)
+        dict =  Dict{Symbol,Any}()
+        for arg in args
+            dict[arg[1]]=arg[2]
         end
+        new(BSplineSurface(points,bs1,bs2), dict)
     end
-    for i in 1:N-1
-        for j in 1:N-1
-            push_face!(m,[(i-1)*N+(j-1)+1, (i-1)*N+(j)+1, (i)*N+(j)+1, (i)*N+j])
+    
+    function BSplineSSurface(points, bs1::BSplineBasis, bs2::BSplineBasis, dict::Dict{Symbol,Any})
+        new(BSplineSurface(points, bs1, bs2), dict)
+    end
+end
+
+function Base.getindex(f::BSplineSSurface, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineSSurface, v, s::Symbol)  f.attr[s] = v end
+
+function (f::BSplineSSurface)(u::T, v::T) where {T<:Real}
+    return f.map(u,v)
+end
+
+function (f::BSplineSSurface)(P::Vector{T}) where {T<:Real}
+    return f.map(P[1],P[2])
+end
+#----------------------------------------------------------------------
+mutable struct BSplineVVolume
+    map  ::BSplineVolume
+    attr ::Dict{Symbol,Any}
+
+    function BSplineVVolume(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis; args...)
+        dict =  Dict{Symbol,Any}()
+        for arg in args
+            dict[arg[1]]=arg[2]
         end
+        new(BSplineVolume(points,bs1,bs2,bs3), dict)
     end
-    for arg in args
-        m[arg[1]]=arg[2]
+    
+    function BSplineVVolume(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis, dict::Dict{Symbol,Any})
+        new(BSplineVolume(points, bs1, bs2, bs3), dict)
     end
-    return m
+end
+
+function Base.getindex(f::BSplineVVolume, s::Symbol)  get(f.attr, s, 0) end
+function Base.setindex!(f::BSplineVVolume, v, s::Symbol)  f.attr[s] = v end
+
+function (f::BSplineVVolume)(u::T, v::T, w::T) where {T<:Real}
+    return f.map(u,v,w)
+end
+
+function (f::BSplineVVolume)(P::Vector{T}) where {T<:Real}
+    return f.map(P[1],P[2],P[3])
+end
+=#
+
+
+#----------------------------------------------------------------------
+function mesh(s::BSplineSurface, N::Int=50; args...)
+    D = domain(s)
+
+    return mesh(s, D[1], D[2], N)
 end
