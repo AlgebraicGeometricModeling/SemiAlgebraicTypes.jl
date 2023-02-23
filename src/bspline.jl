@@ -79,9 +79,9 @@ macro bs_er_scale(bvals, knots, mid, num)
 end
 
 """
-``` 
-knots(d,N,μ,a,b) 
-```
+
+    knots(d,N,μ,a,b) 
+
 
 Compute the knot sequence of degree d, of multiplicity μ with N equally spaced subintervals between a and b.
 
