@@ -1,12 +1,15 @@
 The package `SemiAlgebraicTypes.jl` provides implementation of semialgebraic sets such as points, spheres, lines, cylinders, cones, ellipsoids, meshes, bspline functions, ...
 
+## Installation
+
 To install the package within julia:
 
 ```julia
-] add https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl.git
+] add https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl
 ```
 (`]` key switches to the pkg mode)
 
+## Example
 To use it within julia:
 
 ```julia
@@ -30,5 +33,6 @@ f1 = BSplineCurve(rand(3,5), B1); f1(0.)
 f2 = BSplineSurface(rand(3,5,4), B1,B2); f2(0.,0.)
 f3 = BSplineVolume(rand(3,5,4, 4), B1,B2, B2); f3(0.,0.,0.)
 ```
+## Documentation
 
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://AlgebraicGeometricModeling.github.io/SemiAlgebraicTypes.jl)
