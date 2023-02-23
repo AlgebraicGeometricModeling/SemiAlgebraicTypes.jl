@@ -20,15 +20,15 @@ mutable struct Line{T}
     pt1 :: Vector{T}
     attr::Dict{Symbol,Any}
 end
-function Liner(P0::Vector, P1::Vector)
+function Line(P0::Vector, P1::Vector; args...)
     T = promote_type(eltype(P0), eltype(P1))
     m = Line{T}(P0, P1, Dict{Symbol,Any}())
     for arg in args m[arg[1]]=arg[2] end
     return m
 end
 
-function line(P0::Vector{T},P1::Vector{T};args...) where T
-    return Line(P0,P1)
+function line(P0::Vector,P1::Vector; args...)
+    return Line(P0,P1; args...)
 end
 
 function Base.getindex(m::Line{T}, s::Symbol) where T

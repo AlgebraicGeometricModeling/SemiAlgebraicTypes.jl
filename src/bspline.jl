@@ -202,7 +202,7 @@ mutable struct BSplineVolume <: Function
     basis3::BSplineBasis
     attr ::Dict{Symbol,Any}
     
-    function BSplineSurface(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis)
+    function BSplineVolume(points, bs1::BSplineBasis, bs2::BSplineBasis, bs3::BSplineBasis)
         new(points,bs1,bs2,bs3,Dict{Symbol,Any}())
     end
 end

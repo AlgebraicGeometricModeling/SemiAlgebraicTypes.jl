@@ -26,8 +26,9 @@ m = mesh([[cos(i*pi/5), sin(i*pi/5), 0.0] for i in 1:10], Edge[], [[1,i,i+1] for
 B1 = BSplineBasis(LinRange(0., 2., 4), 3)
 B2 = BSplineBasis(LinRange(0., 1., 3), 3)
 
-f1 = BSplineFunction1D(rand(3,5), B1)
-f2 = BSplineFunction2D(rand(3,5,4), B1,B2)
+f1 = BSplineCurve(rand(3,5), B1); f1(0.)
+f2 = BSplineSurface(rand(3,5,4), B1,B2); f2(0.,0.)
+f3 = BSplineVolume(rand(3,5,4, 4), B1,B2, B2); f3(0.,0.,0.)
 ```
 
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://AlgebraicGeometricModeling.github.io/SemiAlgebraicTypes.jl)
