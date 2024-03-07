@@ -3,7 +3,7 @@ export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, hedge, face,
     push_vertex!, push_edge!, push_face!,
     split_edge!, set_face!, split_face!, glue_edge!, length_face,
     next, prev, opp, face, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!,
-    cc_subdivide!
+    cc_subdivide, cc_subdivide!
 
 import Base: getindex, setindex!, print
 
@@ -431,6 +431,25 @@ function minimal_edges(m::HMesh)
     V
 end
 #----------------------------------------------------------------------
+"""
+    cc_subdivide(msh::HMesh, n::Int64 = 1)
+
+Catmull-Clark subdivision of a Half-Edge mesh.
+
+The mesh `msh` is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
+"""
+function cc_subdivide(msh::HMesh, n::Int64 = 1)
+    m = copy(msh)
+    cc_subdivide!(m,n)
+    return m
+end
+
+function cc_subdivide(msh::Mesh, n::Int64 = 1)
+    m = hmesh(msh)
+    cc_subdivide!(m,n)
+    return m
+end
+
 
 """
     cc_subdivide!(msh::HMesh, n::Int64 = 1)
@@ -506,7 +525,8 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
         v = val[p]
         if bde[p] == 0
             # Interior point
-            msh.points[:,p] .*= ((v-2.5)/v) #((v-2)/v)
+            msh.points[:,p] .*= 1 - 7/(4*v) # (v-2.5)/v #((v-2)/v)
+            # println("---- Interior point ", v)
         elseif val[p] == 1
             #println(":: vertex corner point ", p)
             #NwPoints[:,p] = msh.points[:,p]
@@ -518,7 +538,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
         end
     end
 
-    # println("-- vertex points (2)")
+    #println("-- vertex points (2)")
     for e in 1:nbe(msh)
         p = ptidx_of(msh,e)
         if bde[p] == 0
@@ -526,7 +546,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
             v = val[p]
             msh.points[:,p] += point(msh, pte[e])*(1.5/(v*v))
             f = edge(msh,e).face
-            msh.points[:,p] += point(msh, ptf[f])*(1.0/(v*v))
+            msh.points[:,p] += point(msh, ptf[f])*(0.25/(v*v))
         elseif bde[p] != 0 && val[p] != 1
             # Boundary not corner
             if opp(msh, e) == 0 
