@@ -35,4 +35,6 @@ f3 = BSplineVolume(rand(3,5,4, 4), B1,B2, B2); f3(0.,0.,0.)
 ```
 ## Documentation
 
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://AlgebraicGeometricModeling.github.io/SemiAlgebraicTypes.jl)
+[![](https://img.shields.io/badge/docs-blue.svg)](https://AlgebraicGeometricModeling.github.io/SemiAlgebraicTypes.jl)
+[![](https://img.shields.io/badge/source-orange.svg)](https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl)
+
