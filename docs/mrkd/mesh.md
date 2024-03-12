@@ -12,33 +12,20 @@ SemiAlgebraicTypes.hmesh
 
 ```@docs 
 SemiAlgebraicTypes.normal
-```
-
-```@docs 
 SemiAlgebraicTypes.push_vertex!
-```
-
-```@docs 
 SemiAlgebraicTypes.push_edge!
-```
-
-```@docs 
 SemiAlgebraicTypes.push_face!
 ```
 
 ```@docs 
 SemiAlgebraicTypes.split_edge!
-```
-
-```@docs 
 SemiAlgebraicTypes.split_face!
 ```
 
 ```@docs 
-SemiAlgebraicTypes.cc_subdivide!
-```
 
-```@docs 
+SemiAlgebraicTypes.cc_subdivide!
+SemiAlgebraicTypes.cc_subdivide
 SemiAlgebraicTypes.subdivide_middle!
 ```
 
@@ -50,13 +37,7 @@ SemiAlgebraicTypes.remove_doublon!
 
 ```@docs 
 SemiAlgebraicTypes.nbv
-```
-
-```@docs 
 SemiAlgebraicTypes.nbe
-```
-
-```@docs 
 SemiAlgebraicTypes.nbf
 ```
 

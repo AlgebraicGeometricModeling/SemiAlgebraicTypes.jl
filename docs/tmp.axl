@@ -1,0 +1,7 @@
+<axl>
+  <cone size="0.025" name="0">
+    <point>0.0 0.0 1.0 </point>
+    <point>0.0 0.0 0.0 </point>
+    <radius>0.5</radius>
+  </cone>
+</axl>

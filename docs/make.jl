@@ -15,15 +15,15 @@ makedocs(
              "SemiAlgebraic types" => Code,
              "Attributes" => "attributes.md",
          ],
-         repo = "https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl",
+         repo = Remotes.GitHub("AlgebraicGeometricModeling", "SemiAlgebraicTypes.jl"),
          doctest = false
          )
 
-deploydocs(
+#deploydocs(
 #    root = "docs",
-    repo = "github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl",
-    target = "build",
+#    repo = "github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl",
+#    target = "build",
 #    devbranch = "master",
-    push_preview = true
-)
+#    push_preview = true
+#)
 
