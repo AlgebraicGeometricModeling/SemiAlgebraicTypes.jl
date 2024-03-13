@@ -5,9 +5,15 @@ The package `SemiAlgebraicTypes.jl` provides implementation of semialgebraic set
 To install the package within julia:
 
 ```julia
-] add https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl
+] add SemiAlgebraicTypes
 ```
 (`]` key switches to the pkg mode)
+
+
+To install the latest version:
+```julia
+] add https://github.com/AlgebraicGeometricModeling/SemiAlgebraicTypes.jl
+```
 
 ## Example
 To use it within julia:
