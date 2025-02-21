@@ -98,10 +98,6 @@ function Base.getindex(m::HMesh, s::Symbol)
     get(m.attr, s, 0)
 end
 
-# function Base.getindex(m::HMesh, e::Int64)
-#      m.edges[e]
-# end
-
 function setindex!(m::HMesh, v, s::Symbol)
     m.attr[s] = v
 end

@@ -120,7 +120,7 @@ SemiAlgebraicTypes.Mesh{Float64}(Array{Float64,1}[[0.0, 0.0, 0.0], [1.0, 0.0, 0.
 """
 function push_edge!(m::Mesh{T}, e::Vector{Int64}) where T
     push!(m.edges,e)
-    m
+    return m 
 end
 
 #----------------------------------------------------------------------
@@ -137,7 +137,7 @@ julia> for i in 1:9 push_face!(m,[1,i,i+1]) end;
 """
 function push_face!(m::Mesh{T}, f::Vector{Int64}) where T
     push!(m.faces,f)
-    m
+    return m
 end
 
 #----------------------------------------------------------------------
