@@ -38,18 +38,20 @@ mutable struct HMesh
     faces ::Vector{Int64}
     normals::Matrix{Float64}
     ccw_e  ::Vector{Vector{Int64}}
+    sharp ::Vector{Int64}
     attr  ::Dict{Symbol,Any}
 
     function HMesh()
-        new(Matrix{Float64}(undef,3,0), HEdge[], Int64[], Matrix{Float64}(undef,3,0), Vector{Vector{Int64}}(undef,0), Dict{Symbol,Any}())
+        new(Matrix{Float64}(undef,3,0), HEdge[], Int64[], Matrix{Float64}(undef,3,0), Vector{Vector{Int64}}(undef,0), Int64[], Dict{Symbol,Any}())
     end
 
     function HMesh(pts::AbstractArray{Float64,2},
                    e::Vector{HEdge},
                    f::Vector{Vector{Int64}},
                    normals::Matrix{Float64},
+                   sharp ::Vector{Int64},
                    attr::Dict{Symbol,Any})
-        new(pts,e,f,normals,Vector{Vector{Int64}}(undef,0),attr)
+        new(pts,e,f,normals,Vector{Vector{Int64}}(undef,0),sharp,attr)
     end
 end
 
@@ -77,7 +79,7 @@ function hmesh(P::AbstractArray{Float64,2}, F::Vector{Vector{Int64}},N::Matrix{F
             else
                 u = f[i]; l = f[i%sf+1]
             end
-
+     
             e = get(E, l=>u, 0)
             if e==0
                 E[l=>u] = ne+i
@@ -498,7 +500,6 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
     pte = fill(0, nbe(msh))
     for e in 1:nbe(msh)
         if pte[e] == 0
-
             o = opp(msh, e)
             if o != 0
                 p  = point_of(msh,e)
