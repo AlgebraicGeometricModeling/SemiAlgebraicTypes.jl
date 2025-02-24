@@ -527,10 +527,28 @@ function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n:
         # Adjust original vertex positions (boundary rules only affect position)
         for p in 1:nv0
             v = val[p]
+            
             if bde[p] == 0 && !(p in forced_boundary_vertices)
                 msh.points[:, p] .*= 1 - 7 / (4 * v)
-            elseif val[p] == 1 || p in forced_boundary_vertices
-                continue  # Boundary points don't change position
+            elseif val[p] == 1 
+                continue
+            elseif p in forced_boundary_vertices
+                v_edges = edges_ccw[p]
+                
+                
+                #=while ( !(v_edges[1] in forced_boundary_edges) || !(opp(hm,v_edges[1]) in forced_boundary_edges) )
+                    v_edges = circshift!(v_edges,1)
+                    println("loop")
+                end=#
+
+                if ((v_edges[2] in forced_boundary_edges) || (opp(hm,v_edges[2]) in forced_boundary_edges))
+                    println("Caso 1")
+                   msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[2]]) ) * 0.5
+                else
+                    println("Caso 2")
+                    msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[end]]) ) * 0.5
+                end
+
             else
                 msh.points[:, p] *= 0.5  # Regular subdivision
             end
