@@ -64,36 +64,37 @@ end
 
  Build a HMesh from the array of points and array of faces
 """
-function hmesh(P::AbstractArray{Float64,2}, F::Vector{Vector{Int64}},N::Matrix{Float64}=Matrix{Float64}(undef,3,0); args...)
+function hmesh(P::AbstractArray{Float64,2}, E::Vector{Vector{Int64}}, F::Vector{Vector{Int64}},  N::Matrix{Float64}=Matrix{Float64}(undef,3,0); args...)
     msh = HMesh()
     msh.points = P
     msh.normals = N
-    E = Dict{Pair{Int64,Int64},Int64}()
+    HE = Dict{Pair{Int64,Int64},Int64}()
     for f in F
         ne = nbe(msh)
         push_face!(msh,f) #f[1],f[2],f[3],f[4])
-        for i in 1:length(f)
-            sf = length(f)
+        sf = length(f)
+        for i in 1:sf
             if f[i]< f[i%sf+1]
                 l = f[i]; u = f[i%sf+1]
             else
                 u = f[i]; l = f[i%sf+1]
             end
      
-            e = get(E, l=>u, 0)
+            e = get(HE, l=>u, 0)
             if e==0
-                E[l=>u] = ne+i
+                HE[l=>u] = ne+i
             else
                 glue_edge!(msh, e, ne+i)
             end
         end
     end
+    println("$HE")
     for arg in args msh[string(arg[1])]=arg[2] end
     return msh
 end
 
 function hmesh(m::Mesh{Float64})
-    hmesh(m.points, m.faces,m.normals)
+    hmesh(m.points, m.edges, m.faces, m.normals)
 end
 
 function Base.getindex(m::HMesh, s::Symbol)
