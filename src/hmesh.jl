@@ -2,7 +2,8 @@ export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, hedge, face,
     point_of, ptidx_of, face_of,
     push_vertex!, push_edge!, push_face!,
     split_edge!, set_face!, split_face!, glue_edge!, length_face,
-    next, prev, opp, face, ccw_edges, edges_on_face, minimal_edges, subdivide_middle!,
+    next, prev, opp, face, ccw_edges, edges_on_face, minimal_edges,
+    subdivide_middle!,
     cc_subdivide, cc_subdivide!
 
 import Base: getindex, setindex!, print
@@ -38,7 +39,7 @@ mutable struct HMesh
     faces ::Vector{Int64}
     normals::Matrix{Float64}
     ccw_e  ::Vector{Vector{Int64}}
-    sharp ::Vector{Int64}
+    emarked::Vector{Int64}
     attr  ::Dict{Symbol,Any}
 
     function HMesh()
@@ -49,9 +50,9 @@ mutable struct HMesh
                    e::Vector{HEdge},
                    f::Vector{Vector{Int64}},
                    normals::Matrix{Float64},
-                   sharp ::Vector{Int64},
+                   emarked::Vector{Int64},
                    attr::Dict{Symbol,Any})
-        new(pts,e,f,normals,Vector{Vector{Int64}}(undef,0),sharp,attr)
+        new(pts,e,f,normals,Vector{Vector{Int64}}(undef,0),emarked,attr)
     end
 end
 
@@ -88,7 +89,17 @@ function hmesh(P::AbstractArray{Float64,2}, E::Vector{Vector{Int64}}, F::Vector{
             end
         end
     end
-    println("$HE")
+    # println("$HE")
+    for e in E
+        key = get(HE, e[1]=>e[2], nothing)
+        if key != nothing
+            push!(msh.emarked, key)
+        end
+        key = get(HE, e[2]=>e[1], nothing)
+        if key != nothing
+            push!(msh.emarked, key)
+        end
+    end
     for arg in args msh[string(arg[1])]=arg[2] end
     return msh
 end
