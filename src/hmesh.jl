@@ -457,100 +457,93 @@ Catmull-Clark subdivision of a Half-Edge mesh.
 
 The mesh `msh` is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
 """
-function cc_subdivide!(msh::HMesh, n::Int64 = 1)
-
- for i in 1:n
-    # println("msh ", nbv(msh), " ", nbe(msh), " ", nbf(msh))
-    nv0 = nbv(msh)
-
-    val = fill(0, nbv(msh))
-    bde = fill(0, nbv(msh))
-
-    for e in 1:nbe(msh)
-        p = edge(msh, e).point
-        val[p]+=1
-        if opp(msh,e) == 0
-            bde[p] = e
+function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n::Int64 = 1)
+    for i in 1:n
+        nv0 = nbv(msh)
+        val = fill(0, nbv(msh))
+        bde = fill(0, nbv(msh))
+        
+        # Mark forced boundary edges and their vertices
+        forced_boundary_vertices = Set{Int64}()
+        for e in forced_boundary_edges
+            p1 = ptidx_of(msh, e)
+            p2 = ptidx_of(msh, next(msh, e))
+            #bde[p1] = e
+            #bde[p2] = e
+            push!(forced_boundary_vertices, p1)
+            push!(forced_boundary_vertices, p2)
         end
-    end
-
-    # compute a point on each face 
-    # println("-- face points")
-    ptf = fill(0, nbf(msh))
-    for f in 1:nbf(msh)
-        e0 = msh.faces[f]
-        p = point_of(msh,e0)
-        e = next(msh,e0)
-        c = 1 
-        while e != e0
-            p += point_of(msh,e)
-            e = next(msh,e)
-            c += 1
-        end
-        p/=c
-        ptf[f] =  push_vertex!(msh,p)
-    end
-
-    # compute a point on each edge 
-    # println("-- edge points")
-
-    pte = fill(0, nbe(msh))
-    for e in 1:nbe(msh)
-        if pte[e] == 0
-            o = opp(msh, e)
-            if o != 0
-                p  = point_of(msh,e)
-                p += point_of(msh, next(msh,e))
-                p += point(msh, ptf[edge(msh,e).face])
-                p += point(msh, ptf[edge(msh,o).face])
-                p /= 4.0
-                pte[e] = push_vertex!(msh,p)
-                pte[o] = pte[e]
-            else
-                p   = point_of(msh, e)
-                p  += point_of(msh, next(msh,e))
-                p /= 2
-                pte[e] = push_vertex!(msh, p)
+        
+        # Compute valence and boundary edges
+        for e in 1:nbe(msh)
+            p = edge(msh, e).point
+            val[p] += 1
+            if opp(msh, e) == 0 #|| e in forced_boundary_edges
+                bde[p] = e
             end
         end
-    end
-
-    #println("msh ", nbv(msh), " ", nbe(msh), " ", nbf(msh))
-    
-    #NwPoints = fill(0.0, size(msh.points))
-    # println("-- vertex points (1)")
-    for p in 1:nv0
-        v = val[p]
-        if bde[p] == 0
-            # Interior point
-            msh.points[:,p] .*= 1 - 7/(4*v) # (v-2.5)/v #((v-2)/v)
-            # println("---- Interior point ", v)
-        elseif val[p] == 1
-            #println(":: vertex corner point ", p)
-            #NwPoints[:,p] = msh.points[:,p]
-        else
-            #NwPoints[:,p] = msh.points[:,p]*6
-            #println(" --> boundary point ", p)
-            msh.points[:,p] *= 0.5
-            #println(":: vertex boundary point")
+        
+        # Compute face points (same as before)
+        ptf = fill(0, nbf(msh))
+        for f in 1:nbf(msh)
+            e0 = msh.faces[f]
+            p = point_of(msh, e0)
+            e = next(msh, e0)
+            c = 1
+            while e != e0
+                p += point_of(msh, e)
+                e = next(msh, e)
+                c += 1
+            end
+            p /= c
+            ptf[f] = push_vertex!(msh, p)
         end
-    end
-
-    #println("-- vertex points (2)")
-    for e in 1:nbe(msh)
-        p = ptidx_of(msh,e)
-        if bde[p] == 0
-            # Not a boundary point
+        
+        # Compute edge points (special handling for boundary edges)
+        pte = fill(0, nbe(msh))
+        for e in 1:nbe(msh)
+            if pte[e] == 0
+                o = opp(msh, e)
+                if e in forced_boundary_edges || o == 0
+                    # Treat as boundary edge: midpoint of its two endpoints
+                    p = (point_of(msh, e) + point_of(msh, next(msh, e))) / 2
+                    pte[e] = push_vertex!(msh, p)
+                    pte[o] = pte[e]  # Ensure both half-edges share the same point
+                else
+                    # Regular interior edge
+                    p = point_of(msh, e) + point_of(msh, next(msh, e))
+                    p += point(msh, ptf[edge(msh, e).face])
+                    p += point(msh, ptf[edge(msh, o).face])
+                    p /= 4.0
+                    pte[e] = push_vertex!(msh, p)
+                    pte[o] = pte[e]
+                end
+            end
+        end
+        
+        # Adjust original vertex positions (boundary rules only affect position)
+        for p in 1:nv0
             v = val[p]
-            msh.points[:,p] += point(msh, pte[e])*(1.5/(v*v))
-            f = edge(msh,e).face
-            msh.points[:,p] += point(msh, ptf[f])*(0.25/(v*v))
-        elseif bde[p] != 0 && val[p] != 1
-            # Boundary not corner
-            if opp(msh, e) == 0 
-                #println(" --> boundary point ", p, "  ", e)
-                #msh.points[:,p] *= 0.5
-                msh.points[:,p] += point(msh, pte[e])*0.25
+            if bde[p] == 0 && !(p in forced_boundary_vertices)
+                msh.points[:, p] .*= 1 - 7 / (4 * v)
+            elseif val[p] == 1 || p in forced_boundary_vertices
+                continue  # Boundary points don't change position
+            else
+                msh.points[:, p] *= 0.5  # Regular subdivision
+            end
+        end
+        
+        # Update vertex positions based on edge and face points (connectivity unchanged)
+        for e in 1:nbe(msh)
+            p = ptidx_of(msh, e)
+            if bde[p] == 0 && !(p in forced_boundary_vertices)
+                v = val[p]
+                msh.points[:, p] += point(msh, pte[e]) * (1.5 / (v * v))
+                f = edge(msh, e).face
+                msh.points[:, p] += point(msh, ptf[f]) * (0.25 / (v * v))
+            elseif bde[p] != 0 || !(p in forced_boundary_vertices)
+                if opp(msh, e) == 0 || e in forced_boundary_edges
+                    msh.points[:,p] += point(msh, pte[e])*0.25
                 be = e
                 c = 0
                 while opp(msh, prev(msh,be)) != 0 && c<100
@@ -565,11 +558,11 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                 end
                 be  = prev(msh,be)
                 msh.points[:,p] += point(msh, pte[be])*0.25
+                end
             end
         end
-    end
-    
-    # Split edges
+        
+         # Split edges
     # println("-- split edges")
     spl = fill(0, nbe(msh))
     for e in 1:nbe(msh)
