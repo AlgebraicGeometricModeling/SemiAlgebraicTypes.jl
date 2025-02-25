@@ -89,15 +89,21 @@ function hmesh(P::AbstractArray{Float64,2}, E::Vector{Vector{Int64}}, F::Vector{
             end
         end
     end
-    # println("$HE")
+    println("$HE")
     for e in E
-        key = get(HE, e[1]=>e[2], nothing)
-        if key != nothing
-            push!(msh.emarked, key)
+        he = get(HE, e[1]=>e[2], nothing)
+        if he != nothing
+            push!(msh.emarked, he)
+            if (op = opp(msh, he)) != 0
+                push!(msh.emarked, op)
+            end
         end
-        key = get(HE, e[2]=>e[1], nothing)
-        if key != nothing
-            push!(msh.emarked, key)
+        he = get(HE, e[2]=>e[1], nothing)
+        if he != nothing
+            push!(msh.emarked, he)
+            if (op = opp(msh, he)) != 0
+                push!(msh.emarked, op)
+            end
         end
     end
     for arg in args msh[string(arg[1])]=arg[2] end
@@ -473,6 +479,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
         nv0 = nbv(msh)
         val = fill(0, nbv(msh))
         bde = fill(0, nbv(msh))
+        edges_ccw = ccw_edges(msh)
         
         # Mark forced boundary edges and their vertices
         forced_boundary_vertices = Set{Int64}()
@@ -549,7 +556,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                     println("loop")
                 end=#
 
-                if ((v_edges[2] in msh.emarked) || (opp(hm,v_edges[2]) in msh.emarked))
+                if ((v_edges[2] in msh.emarked) || (opp(msh,v_edges[2]) in msh.emarked))
                     println("Caso 1")
                     msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[2]]) ) * 0.5
                 else
