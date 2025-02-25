@@ -89,7 +89,7 @@ function hmesh(P::AbstractArray{Float64,2}, E::Vector{Vector{Int64}}, F::Vector{
             end
         end
     end
-    println("$HE")
+    #println("$HE")
     for e in E
         he = get(HE, e[1]=>e[2], nothing)
         if he != nothing
