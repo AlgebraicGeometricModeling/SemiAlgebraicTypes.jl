@@ -468,7 +468,7 @@ Catmull-Clark subdivision of a Half-Edge mesh.
 
 The mesh `msh` is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
 """
-function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n::Int64 = 1)
+function cc_subdivide!(msh::HMesh, n::Int64 = 1)
     for i in 1:n
         nv0 = nbv(msh)
         val = fill(0, nbv(msh))
@@ -476,7 +476,7 @@ function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n:
         
         # Mark forced boundary edges and their vertices
         forced_boundary_vertices = Set{Int64}()
-        for e in forced_boundary_edges
+        for e in msh.emarked
             p1 = ptidx_of(msh, e)
             p2 = ptidx_of(msh, next(msh, e))
             #bde[p1] = e
@@ -489,7 +489,7 @@ function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n:
         for e in 1:nbe(msh)
             p = edge(msh, e).point
             val[p] += 1
-            if opp(msh, e) == 0 #|| e in forced_boundary_edges
+            if opp(msh, e) == 0 #|| e in msh.emarked
                 bde[p] = e
             end
         end
@@ -515,7 +515,7 @@ function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n:
         for e in 1:nbe(msh)
             if pte[e] == 0
                 o = opp(msh, e)
-                if e in forced_boundary_edges || o == 0
+                if e in msh.emarked || o == 0
                     # Treat as boundary edge: midpoint of its two endpoints
                     p = (point_of(msh, e) + point_of(msh, next(msh, e))) / 2
                     pte[e] = push_vertex!(msh, p)
@@ -544,14 +544,14 @@ function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n:
                 v_edges = edges_ccw[p]
                 
                 
-                #=while ( !(v_edges[1] in forced_boundary_edges) || !(opp(hm,v_edges[1]) in forced_boundary_edges) )
+                #=while ( !(v_edges[1] in msh.emarked) || !(opp(hm,v_edges[1]) in msh.emarked) )
                     v_edges = circshift!(v_edges,1)
                     println("loop")
                 end=#
 
-                if ((v_edges[2] in forced_boundary_edges) || (opp(hm,v_edges[2]) in forced_boundary_edges))
+                if ((v_edges[2] in msh.emarked) || (opp(hm,v_edges[2]) in msh.emarked))
                     println("Caso 1")
-                   msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[2]]) ) * 0.5
+                    msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[2]]) ) * 0.5
                 else
                     println("Caso 2")
                     msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[end]]) ) * 0.5
@@ -571,7 +571,7 @@ function cc_subdivide!(msh::HMesh, forced_boundary_edges::Vector{Int64} = [], n:
                 f = edge(msh, e).face
                 msh.points[:, p] += point(msh, ptf[f]) * (0.25 / (v * v))
             elseif bde[p] != 0 || !(p in forced_boundary_vertices)
-                if opp(msh, e) == 0 || e in forced_boundary_edges
+                if opp(msh, e) == 0 || e in msh.emarked
                     msh.points[:,p] += point(msh, pte[e])*0.25
                 be = e
                 c = 0
