@@ -557,10 +557,10 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                 end=#
 
                 if ((v_edges[2] in msh.emarked) || (opp(msh,v_edges[2]) in msh.emarked))
-                    println("Caso 1")
+                    #println("Caso 1")
                     msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[2]]) ) * 0.5
                 else
-                    println("Caso 2")
+                    #println("Caso 2")
                     msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[end]]) ) * 0.5
                 end
 
