@@ -526,7 +526,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                     # Treat as boundary edge: midpoint of its two endpoints
                     p = (point_of(msh, e) + point_of(msh, next(msh, e))) / 2
                     pte[e] = push_vertex!(msh, p)
-                    pte[o] = pte[e]  # Ensure both half-edges share the same point
+                    #pte[o] = pte[e]  # Ensure both half-edges share the same point
                 else
                     # Regular interior edge
                     p = point_of(msh, e) + point_of(msh, next(msh, e))
@@ -534,7 +534,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                     p += point(msh, ptf[edge(msh, o).face])
                     p /= 4.0
                     pte[e] = push_vertex!(msh, p)
-                    pte[o] = pte[e]
+                    #pte[o] = pte[e]
                 end
             end
         end
@@ -549,6 +549,15 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                 continue
             elseif p in forced_boundary_vertices
                 v_edges = edges_ccw[p]
+
+                for k=1:val[p]
+                    tmp_e = v_edges[k]
+
+                    if tmp_e in msh.emarked
+                        msh.points[:, p] += point_of(msh,next(msh,tmp_e))*(1/6)
+                    end
+                    msh.points[:, p] += point_of(msh,v_edges[1])*(2/3)
+                end
                 
                 
                 #=while ( !(v_edges[1] in msh.emarked) || !(opp(hm,v_edges[1]) in msh.emarked) )
@@ -556,13 +565,13 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                     println("loop")
                 end=#
 
-                if ((v_edges[2] in msh.emarked) || (opp(msh,v_edges[2]) in msh.emarked))
+                #=if ((v_edges[2] in msh.emarked) || (opp(msh,v_edges[2]) in msh.emarked))
                     #println("Caso 1")
                     msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[2]]) ) * 0.5
                 else
                     #println("Caso 2")
                     msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[end]]) ) * 0.5
-                end
+                end=#
 
             else
                 msh.points[:, p] *= 0.5  # Regular subdivision
