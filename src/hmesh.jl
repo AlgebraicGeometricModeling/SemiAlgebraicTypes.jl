@@ -226,7 +226,13 @@ function split_edge!(msh, e, p)
     NE.point = p
     NE.prev  = e
 
+
     ne = push_edge!(msh,NE)
+
+    if e in msh.emarked
+        push!(msh.emarked,ne)
+
+    end
     
     edge(msh,edge(msh,e).nxt).prev = ne
     edge(msh,e).nxt = ne
@@ -238,6 +244,13 @@ function split_edge!(msh, e, p)
         NO.prev = o
         
         no = push_edge!(msh,NO)
+
+        if e in msh.emarked
+
+            
+            push!(msh.emarked,no)
+    
+        end
 
         edge(msh,edge(msh,o).nxt).prev = no
         edge(msh,o).nxt = no
@@ -491,6 +504,8 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
             push!(forced_boundary_vertices, p1)
             push!(forced_boundary_vertices, p2)
         end
+
+        println(forced_boundary_vertices)
         
         # Compute valence and boundary edges
         for e in 1:nbe(msh)
@@ -543,38 +558,35 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
         for p in 1:nv0
             v = val[p]
             
-            if bde[p] == 0 && !(p in forced_boundary_vertices)
+            if bde[p] == 0 && !(p in forced_boundary_vertices) #INNER VERTEX
                 msh.points[:, p] .*= 1 - 7 / (4 * v)
-            elseif val[p] == 1 
+            elseif val[p] == 1 #CORNER VERTEX
                 continue
-            elseif p in forced_boundary_vertices
+            elseif (p in forced_boundary_vertices) && bde[p]==0 #FORCED AND NOT BOUNDARY
                 v_edges = edges_ccw[p]
 
+                msh.points[:, p] *= (2/3)
                 for k=1:val[p]
                     tmp_e = v_edges[k]
 
                     if tmp_e in msh.emarked
                         msh.points[:, p] += point_of(msh,next(msh,tmp_e))*(1/6)
                     end
-                    msh.points[:, p] += point_of(msh,v_edges[1])*(2/3)
+                    
                 end
-                
-                
-                #=while ( !(v_edges[1] in msh.emarked) || !(opp(hm,v_edges[1]) in msh.emarked) )
-                    v_edges = circshift!(v_edges,1)
-                    println("loop")
-                end=#
 
-                #=if ((v_edges[2] in msh.emarked) || (opp(msh,v_edges[2]) in msh.emarked))
-                    #println("Caso 1")
-                    msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[2]]) ) * 0.5
-                else
-                    #println("Caso 2")
-                    msh.points[:, p] = ( point(msh, pte[v_edges[1]]) + point(msh, pte[v_edges[end]]) ) * 0.5
-                end=#
+            elseif bde[p]==1 #BOUNDARY
+                msh.points[:, p] *= 0.5  #REGULAR INNER
+                #=v_edges = edges_ccw[p]
+                first_e = v_edges[1]
+                last_e = prev(msh,v_edges[end])
+
+                msh.points[:, p] *= (2/3)
+                msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/6)
+                msh.points[:, p] += point_of(msh,last_e)*(1/6)=#
 
             else
-                msh.points[:, p] *= 0.5  # Regular subdivision
+                msh.points[:, p] *= 0.5  #REGULAR INNER
             end
         end
         
