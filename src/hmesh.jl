@@ -494,7 +494,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
       is_bde = fill(false, nbv(msh))
       edges_ccw = ccw_edges(msh)
       
-      # Mark forced boundary edges and their vertices
+      # Mark vertices of singular edges as singular
       v_singular = Set{Int64}()
       for e in msh.esingular
           p1 = ptidx_of(msh, e)
