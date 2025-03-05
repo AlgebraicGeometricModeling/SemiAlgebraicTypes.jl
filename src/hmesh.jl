@@ -576,10 +576,10 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
               if nse > 1  #INNER VERTEX TO SHARP EDGE
                   # We apply the boundray scheme with the first two mark edges
                   # Should adapt to all the singular edges
-                  
-                  msh.points[:, p] *= (2/3)
-                  msh.points[:, p] += point_of(msh,next(msh,e_sharp[1]))*(1/6)
-                  msh.points[:, p] += point_of(msh,next(msh,e_sharp[2]))*(1/6)
+                  # Previously 1-4-1
+                  msh.points[:, p] *= (3/4)
+                  msh.points[:, p] += point_of(msh,next(msh,e_sharp[1]))*(1/8)
+                  msh.points[:, p] += point_of(msh,next(msh,e_sharp[2]))*(1/8)
                   
               elseif nse == 1 #END VERTEX OF VANISHING EDGE
                   # We treat it as a regular inner vertex
@@ -596,9 +596,13 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
               
               first_e = v_edges[1]
               last_e  = prev(msh,v_edges[end])
-              msh.points[:, p] *= (2/3)
-              msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/6)
-              msh.points[:, p] += point_of(msh,last_e)*(1/6)
+              # Previously 1-4-1
+              # msh.points[:, p] *= (2/3)
+              # msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/6)
+              # msh.points[:, p] += point_of(msh,last_e)*(1/6)
+              msh.points[:, p] *= (3/4)
+              msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/8)
+              msh.points[:, p] += point_of(msh,last_e)*(1/8)
               
           else
               println("???")
