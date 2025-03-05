@@ -73,5 +73,5 @@ m = offdata("cube.off")
 
 """
 function offdata(file::String)
-    m = offread(joinpath(G1S[:pkgdir],"data/off",file))
+    m = offread(joinpath(SAT[:pkgdir],"data/off",file))
 end
