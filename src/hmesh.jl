@@ -1,5 +1,6 @@
 export HEdge, copy, HMesh, hmesh, nbv, nbe, nbf, point, edge, hedge, face,
     point_of, ptidx_of, face_of,
+    point_id,
     push_vertex!, push_edge!, push_face!,
     split_edge!, set_face!, split_face!, glue_edge!, length_face,
     next, prev, opp, face, ccw_edges, edges_on_face, minimal_edges,
@@ -20,7 +21,7 @@ mutable struct HEdge
     end
 
     function HEdge(v::Int64, n::Int64, p::Int64, o::Int64, f::Int64)
-        new(v,n,p,o,f)
+        new(v,n,p,o,f,s)
     end
 
     function HEdge(e::HEdge)
@@ -43,7 +44,7 @@ mutable struct HMesh
     attr  ::Dict{Symbol,Any}
 
     function HMesh()
-        new(Matrix{Float64}(undef,3,0), HEdge[], Int64[], Matrix{Float64}(undef,3,0), Vector{Vector{Int64}}(undef,0), Int64[], Dict{Symbol,Any}())
+        new(Matrix{Float64}(undef,3,0), HEdge[], Int64[], Matrix{Float64}(undef,3,0), Vector{Vector{Int64}}(undef,0), Vector{Int64}(undef,0), Dict{Symbol,Any}())
     end
 
     function HMesh(pts::AbstractArray{Float64,2},
@@ -69,6 +70,7 @@ function hmesh(P::AbstractArray{Float64,2}, E::Vector{Vector{Int64}}, F::Vector{
     msh = HMesh()
     msh.points = P
     msh.normals = N
+    msh.esingular = Vector{Int64}(undef,0)
     HE = Dict{Pair{Int64,Int64},Int64}()
     for f in F
         ne = nbe(msh)
@@ -146,6 +148,8 @@ function face(m::HMesh, i) m.faces[i] end
 function point_of(m::HMesh, i) m.points[:, m.edges[i].point] end
 function ptidx_of(m::HMesh, e) m.edges[e].point end
 
+function point_id(m::HMesh, e) m.edges[e].point end
+
 function face_of(m::HMesh, e::Int64)
     edge(m,e).face
 end
@@ -212,6 +216,36 @@ function push_face!(m::HMesh, p1::Int64, p2::Int64, p3::Int64, p4::Int64)
     return f
 end
 
+export glue_edges!
+
+function glue_edges!(m::HMesh, e1::Int64, e2::Int64)
+    m.edges[e1].opp = e2
+    m.edges[e2].opp = e1    
+end
+
+#----------------------------------------------------------------------
+export is_border, is_singular, edge_of_face
+
+"""
+    Test if the edge is on the boundary of the surface (i.e. opp==0 ?)
+"""
+function is_border(m::HMesh, e::Int64)
+    @assert e>0
+    return  opp(m,e)==0
+end
+
+function is_singular(msh::HMesh,e::Int64)
+    return is_border(msh,e) || (e in msh.esingular)
+end
+
+"""
+    Reference half-edge defining the face.
+"""
+function edge_of_face(m::HMesh, f::Int64)
+    return m.faces[f]
+end
+
+
 """
   Insert the point of index p in the edge e and its opposite if it exists.
   A new edge is added in front of the edge e, as well as in front of 
@@ -229,9 +263,9 @@ function split_edge!(msh, e, p)
 
     ne = push_edge!(msh,NE)
 
-    if e in msh.esingular
+    if (e in msh.esingular)
         push!(msh.esingular,ne)
-
+        #println(".... ",length(msh.esingular)
     end
     
     edge(msh,edge(msh,e).nxt).prev = ne
@@ -246,8 +280,6 @@ function split_edge!(msh, e, p)
         no = push_edge!(msh,NO)
 
         if e in msh.esingular
-
-            
             push!(msh.esingular,no)
     
         end
@@ -383,6 +415,7 @@ function subdivide_middle!(m::HMesh)
 end
 
 
+#----------------------------------------------------------------------
 function glue_edge!(m::HMesh, i::Int64, j::Int64)
     m.edges[i].opp=j
     m.edges[j].opp=i
@@ -390,25 +423,19 @@ end
 
 #----------------------------------------------------------------------
 function ccw_edges(m::HMesh, e0::Int64)
-    E = Int64[e0]
-    o1 = prev(m,e0)
-    if o1!= 0
-        e1 = opp(m,o1)
-    else
-        e1 = 0
-    end
-    while e1 != 0 && e1 != e0
-        push!(E,e1)
-        o1 = prev(m,e1)
-        if o1!= 0
-            e1 = opp(m,o1)
-        else
-            e1=0
-        end
-    end
-    E
-end
 
+    E0 = Int64[e0]
+
+    ep = prev(m,e0)
+    e = opp(m,ep)
+    while !is_singular(m,ep) && e != e0
+        push!(E0,e)
+        ep = prev(m,e)
+        e  = opp(m,ep)
+    end
+    return E0
+
+end
 
 """
     ccw_edges(m::HMesh)
@@ -421,7 +448,7 @@ function ccw_edges(m::HMesh)
     M = fill(nbe(m)+1, nbv(m))
 
     for (e,i) in zip(m.edges, 1:nbe(m))
-        if i<M[e.point] || opp(m,i) == 0
+        if i<M[e.point] || is_singular(m,i) # == 0
             M[e.point] = i
         end
     end
@@ -430,6 +457,7 @@ function ccw_edges(m::HMesh)
     for i in 1:nbv(m)
         if M[i]<= nbe(m)
             E[i] = ccw_edges(m, M[i])
+            #println("---- ",E[i])
         else
             E[i] = Int64[]
         end
@@ -488,127 +516,122 @@ Catmull-Clark subdivision of a Half-Edge mesh.
 The mesh `msh` is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
 """
 function cc_subdivide!(msh::HMesh, n::Int64 = 1)
-  for i in 1:n
-      nv0 = nbv(msh)
-      val = fill(0, nbv(msh))
-      is_bde = fill(false, nbv(msh))
-      edges_ccw = ccw_edges(msh)
-      
-      # Mark vertices of singular edges as singular vertices
-      v_singular = Set{Int64}()
-      for e in msh.esingular
-          p1 = ptidx_of(msh, e)
-          p2 = ptidx_of(msh, next(msh, e))
-          #is_bde[p1] = e
-          #is_bde[p2] = e
-          push!(v_singular, p1)
-          push!(v_singular, p2)
-      end
 
-      #println("Vertex singular: ", v_singular)
-      
-      # Compute valence and boundary edges
-      for e in 1:nbe(msh)
-          p = edge(msh, e).point
-          val[p] += 1
-          if opp(msh, e) == 0 #|| e in msh.esingular
-              is_bde[p] = true
-          end
-      end
-      
-      # Compute face points (same as before)
-      ptf = fill(0, nbf(msh))
-      for f in 1:nbf(msh)
-          e0 = msh.faces[f]
-          p = point_of(msh, e0)
-          e = next(msh, e0)
-          c = 1
-          while e != e0
-              p += point_of(msh, e)
-              e = next(msh, e)
-              c += 1
-          end
-          p /= c
-          ptf[f] = push_vertex!(msh, p)
-      end
+    #for e in msh.esingular  msh.edges[e].opp = 0 end
+    
+    for i in 1:n
+        nv0 = nbv(msh)
+        val      = fill(0, nbv(msh))
+        sing_val = fill(0, nbv(msh))
+        sing_edges = Dict{Int64,Int64}() #p::point -> e::a singular edge
+
+        edges_ccw = ccw_edges(msh)
         
-      # Compute edge points (special handling for boundary edges)
-      pte = fill(0, nbe(msh))
-      for e in 1:nbe(msh)
-          if pte[e] == 0
-              o = opp(msh, e)
-              if e in msh.esingular || o == 0
-                  # Treat as boundary edge: midpoint of its two endpoints
-                  p = (point_of(msh, e) + point_of(msh, next(msh, e))) / 2
-                  pte[e] = push_vertex!(msh, p)
-                  #pte[o] = pte[e]  # Ensure both half-edges share the same point
-              else
-                  # Regular interior edge
-                  p = point_of(msh, e) + point_of(msh, next(msh, e))
-                  p += point(msh, ptf[edge(msh, e).face])
-                  p += point(msh, ptf[edge(msh, o).face])
-                  p /= 4.0
-                  pte[e] = push_vertex!(msh, p)
-              end
-          end
-      end
+        # Compute valence and boundary edges
+        for e in 1:nbe(msh)
+            p = point_id(msh,e) 
+            val[p] += 1
+            if is_singular(msh, e) #|| e in msh.esingular
+
+                sing_val[p]+=1
+                sing_edges[p]=e
+
+                if is_border(msh,e)
+                    np = point_id(msh,next(msh,e))
+                    sing_val[np]+=1
+                end
+                        
+            end
+        end
+
+        #println("Singular: $sing_edges")
+        #println("sing val: $sing_val")
+        #println("     val: $val")
+
+        # Compute face points (same as before)
+        ptf = fill(0, nbf(msh))
+        for f in 1:nbf(msh)
+            e0 = msh.faces[f]
+            p = point_of(msh, e0)
+            e = next(msh, e0)
+            c = 1
+            while e != e0
+                p += point_of(msh, e)
+                e = next(msh, e)
+                c += 1
+            end
+            p /= c
+            if p[2] > 3 @info("f $p") end
+            ptf[f] = push_vertex!(msh, p)
+        end
         
-      # Compute vertex points (boundary rules only affect position)
-      for p in 1:nv0
-          v = val[p]
-          v_edges = edges_ccw[p]
-          if !(is_bde[p]) && !(p in v_singular) #REGULAR INNER VERTEX
-              
-              msh.points[:, p] .*= (v-3)/v #1 - 7 / (4 * v)
-              for e in v_edges
-                  msh.points[:, p] += point(msh, pte[e]) * (2 / (v * v))
-                  f = edge(msh, e).face
-                  msh.points[:, p] += point(msh, ptf[f]) * (1 / (v * v))
-              end
-              
-          elseif val[p] == 1 #CORNER VERTEX
-              continue
-          elseif !(is_bde[p]) && (p in v_singular)  #SINGULAR AND NOT BOUNDARY
-              
-              e_sharp = [e for e in v_edges if (e in msh.esingular)]
-              nse = length(e_sharp)
-              
-              if nse > 1  #INNER VERTEX TO SHARP EDGE
-                  # We apply the boundray scheme with the first two mark edges
-                  # Should adapt to all the singular edges
-                  # Previously 1-4-1
-                  msh.points[:, p] *= (3/4)
-                  msh.points[:, p] += point_of(msh,next(msh,e_sharp[1]))*(1/8)
-                  msh.points[:, p] += point_of(msh,next(msh,e_sharp[2]))*(1/8)
-                  
-              elseif nse == 1 #END VERTEX OF VANISHING EDGE
-                  # We treat it as a regular inner vertex
-                  
-                  msh.points[:, p] .*= (v-3)/v 
-                  for e in v_edges
-                      msh.points[:, p] += point(msh, pte[e]) * (2 / (v * v))
-                      f = edge(msh, e).face
-                      msh.points[:, p] += point(msh, ptf[f]) * (1 / (v * v))
-                  end
-              end                    
-              
-          elseif is_bde[p] #BOUNDARY VERTEX
-              
-              first_e = v_edges[1]
-              last_e  = prev(msh,v_edges[end])
-              # Previously 1-4-1
-              # msh.points[:, p] *= (2/3)
-              # msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/6)
-              # msh.points[:, p] += point_of(msh,last_e)*(1/6)
-              msh.points[:, p] *= (3/4)
-              msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/8)
-              msh.points[:, p] += point_of(msh,last_e)*(1/8)
-              
-          else
-              println("???")
-                # msh.points[:, p] *= 0.5  #REGULAR INNER
-          end
-      end
+        # Compute edge points (special handling for boundary edges)
+        pte = fill(0, nbe(msh))
+        for e in 1:nbe(msh)
+            #if pte[e] == 0
+            if is_singular(msh,e)    #e in msh.esingular || o == 0
+                # Treat as boundary edge: midpoint of its two endpoints
+                p = (point_of(msh, e) + point_of(msh, next(msh, e))) / 2
+                pte[e] = push_vertex!(msh, p)
+                #@info("e   $p")
+                #pte[o] = pte[e]  # Ensure both half-edges share the same point
+            else
+                # Regular interior edge
+                p = point_of(msh, e) + point_of(msh, next(msh, e))
+                p += point(msh, ptf[edge(msh, e).face])
+                p += point(msh, ptf[edge(msh, opp(msh, e)).face])
+                p /= 4.0
+                #@info("e   $p")
+                pte[e] = push_vertex!(msh, p)
+            end
+            #end
+        end
+        
+        # Compute vertex points (boundary rules only affect position)
+        for p in 1:nv0
+            v = val[p]
+            v_edges = edges_ccw[p]
+            #print("... point $p ",is_sing[p])
+            if val[p] == 1 || sing_val[p] >2 # == 1 #CORNER VERTEX
+                #println("... Corner")
+                continue
+            elseif haskey(sing_edges,p)  #[p] != 0 #boundary or singular vertex
+                #println("... Singular boundary or smooth corner")
+
+                es = sing_edges[p]
+
+                first_e = next(msh,es)
+                last_e  = prev(msh,es)
+
+                if !is_singular(msh, last_e)
+                    last_e = prev(msh,opp(msh,last_e))
+                end
+
+                #println("... ", point_id(msh,first_e), "  ", point_id(msh, last_e))
+
+                # Previously 1-4-1
+                # msh.points[:, p] *= (2/3)
+                # msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/6)
+                # msh.points[:, p] += point_of(msh,last_e)*(1/6)
+                msh.points[:, p] *= (2/3)
+                msh.points[:, p] += point_of(msh,first_e)*(1/6)
+                msh.points[:, p] += point_of(msh,last_e)*(1/6)
+
+
+
+            elseif !haskey(sing_edges,p) #&& !(p in v_singular) #REGULAR INNER VERTEX
+                #println("... Regular $v $v_edges")
+                msh.points[:, p] .*= (v-3)/v #1 - 7 / (4 * v)
+                for e in v_edges
+                    msh.points[:, p] += point(msh, pte[e]) * (2 / (v * v))
+                    f = edge(msh, e).face
+                    msh.points[:, p] += point(msh, ptf[f]) * (1 / (v * v))
+                end
+                if msh.points[2, p] >3  println(".... ", msh.points[:, p]) end
+            else
+                @info("cc_subdivide case ???")
+            end
+        end
 
       # Split edges
       # println("-- split edges")
@@ -616,7 +639,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
       for e in 1:nbe(msh)
           o = opp(msh,e)
           if o == 0 
-                spl[e] = 1
+              spl[e] = 1
           elseif spl[o] == 0
               spl[e] = 1
           end
@@ -625,7 +648,6 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
       for e in 1:nbe(msh)
           if spl[e] == 1
               split_edge!(msh, e, pte[e])
-              #println("->split ", e, "  ", edge(msh,e))
           end
       end
       
@@ -638,10 +660,10 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
               e[i] = next(msh,e[i-1])
           end
           
-          p1 = ptidx_of(msh,e[4])
-          p2 = ptidx_of(msh,e[8])
+          p1 = point_id(msh,e[4])
+          p2 = point_id(msh,e[8])
           
-          split_face!(msh, f, ptidx_of(msh,e[2]), ptidx_of(msh,e[6]))
+          split_face!(msh, f, point_id(msh,e[2]), point_id(msh,e[6]))
           
           nf = nbf(msh)
 
@@ -653,7 +675,6 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
           split_face!(msh,  f,  p2, ptf[f])
           
       end
-   end
-
-
+    end
+    return msh
 end

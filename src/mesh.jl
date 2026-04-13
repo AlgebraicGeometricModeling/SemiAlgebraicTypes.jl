@@ -256,6 +256,8 @@ function remove_doublon!(m::Mesh{Float64}, eps::Float64=1.e-3)
     m.points = P
     m.edges  = E
     m.faces  = F
+
+    return m
 end
 
 #----------------------------------------------------------------------

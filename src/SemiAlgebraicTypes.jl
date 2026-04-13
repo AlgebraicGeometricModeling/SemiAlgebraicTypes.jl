@@ -11,8 +11,9 @@ include("tmesh.jl")
 include("bspline.jl")
 include("parametric.jl")
 
-include("offdata.jl")
 include("axldata.jl")
+include("offdata.jl")
+include("objdata.jl")
 
 include("color.jl")
 
