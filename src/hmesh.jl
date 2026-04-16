@@ -515,7 +515,7 @@ Catmull-Clark subdivision of a Half-Edge mesh.
 
 The mesh `msh` is replaced by the subdivided mesh, applying n times Catmull-Clark scheme.
 """
-function cc_subdivide!(msh::HMesh, n::Int64 = 1)
+function cc_subdivide!(msh::HMesh, n::Int64 = 1; verbose = false)
 
     #for e in msh.esingular  msh.edges[e].opp = 0 end
     
@@ -544,9 +544,9 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
             end
         end
 
-        #println("Singular: $sing_edges")
-        #println("sing val: $sing_val")
-        #println("     val: $val")
+        verbose && println("Singular: $sing_edges")
+        verbose && println("sing val: $sing_val")
+        verbose && println("     val: $val")
 
         # Compute face points (same as before)
         ptf = fill(0, nbf(msh))
@@ -593,19 +593,30 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
             v_edges = edges_ccw[p]
             #print("... point $p ",is_sing[p])
             if val[p] == 1 || sing_val[p] >2 # == 1 #CORNER VERTEX
-                #println("... Corner")
+                verbose && println("... Corner")
                 continue
             elseif haskey(sing_edges,p)  #[p] != 0 #boundary or singular vertex
-                #println("... Singular boundary or smooth corner")
+                verbose && println("... Singular boundary or smooth corner")
 
                 es = sing_edges[p]
 
-                first_e = next(msh,es)
-                last_e  = prev(msh,es)
+                #println("...> $es ", opp(msh,es))
 
-                if !is_singular(msh, last_e)
-                    last_e = prev(msh,opp(msh,last_e))
+                first_e = next(msh,es)
+
+                pe = prev(msh,es)
+
+                c = 0
+                while opp(msh,pe) != 0 && c < 20
+                    pe = prev(msh,opp(msh,pe))
+                    c+=1
                 end
+                
+                last_e  = pe # prev(msh,es)
+
+                # if !is_singular(msh, last_e)
+                #    last_e = prev(msh,opp(msh,last_e))
+                # end
 
                 #println("... ", point_id(msh,first_e), "  ", point_id(msh, last_e))
 
@@ -627,7 +638,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1)
                     f = edge(msh, e).face
                     msh.points[:, p] += point(msh, ptf[f]) * (1 / (v * v))
                 end
-                if msh.points[2, p] >3  println(".... ", msh.points[:, p]) end
+                #if msh.points[2, p] >3  println(".... ", msh.points[:, p]) end
             else
                 @info("cc_subdivide case ???")
             end

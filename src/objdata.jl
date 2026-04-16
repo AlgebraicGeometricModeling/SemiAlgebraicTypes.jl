@@ -65,7 +65,7 @@ Read an obj file and ouput a mesh.
 objread("file.obj")
 ```
 """
-function objread(file::String)
+function objread(file::String; rmdbl = true)
     if !endswith(file,".obj")
         file = file*".obj"
     end
@@ -82,6 +82,21 @@ function objread(file::String)
                 push!(pt, parse(Float64, l[i]))
             end
             push_vertex!(m,pt)
+        elseif startswith(txt, "l ")
+            l = split(txt);
+            e = Int64[]
+            for i in 2:length(l)
+                push!(e, parse(Int64, l[i]))
+            end
+            if rmdbl
+                for i in 1:length(e)
+                    pt=m.points[:,e[i]]
+                    j = findfirst(t->norm(m.points[:,t]-pt)<1.e-1, collect(1:e[i]))
+                    println(">> ",j)
+                    e[i]=j
+                end
+            end
+            push_edge!(m,e)
         elseif startswith(txt, "f ")
             l = split(txt);
             f = Int64[]
@@ -91,8 +106,6 @@ function objread(file::String)
                 end
             end
             push_face!(m,f)
-        elseif startswith(txt, "o")
-            
         end
     end
     close(io)
