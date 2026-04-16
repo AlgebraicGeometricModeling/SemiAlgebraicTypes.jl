@@ -618,12 +618,7 @@ function cc_subdivide!(msh::HMesh, n::Int64 = 1; verbose = false)
                 #    last_e = prev(msh,opp(msh,last_e))
                 # end
 
-                #println("... ", point_id(msh,first_e), "  ", point_id(msh, last_e))
-
-                # Previously 1-4-1
-                # msh.points[:, p] *= (2/3)
-                # msh.points[:, p] += point_of(msh,next(msh,first_e))*(1/6)
-                # msh.points[:, p] += point_of(msh,last_e)*(1/6)
+                # rule 1-4-1
                 msh.points[:, p] *= (2/3)
                 msh.points[:, p] += point_of(msh,first_e)*(1/6)
                 msh.points[:, p] += point_of(msh,last_e)*(1/6)
