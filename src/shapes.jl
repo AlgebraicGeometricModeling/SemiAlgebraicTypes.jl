@@ -1,8 +1,58 @@
 export Line, Sphere, Cylinder, Cone, Ellipsoid, point, sphere, line, cylinder, cone, ellipsoid
 
-point() = Float64[0.0,0.0,0.0]
-point(x ::T, y::T) where T = T[x,y]
-point(x ::T, y::T, z::T) where T = T[x,y,z]
+#point() = Float64[0.0,0.0,0.0]
+#point(x ::T, y::T) where T = T[x,y]
+#point(x ::T, y::T, z::T) where T = T[x,y,z]
+
+#----------------------------------------------------------------------
+"""
+`Point{T}` represented by a vector of n >=3 coordinates.
+
+**Example**
+
+    Point([0,0,0])
+
+"""
+mutable struct Point{T}
+    pt :: Vector{T}
+    attr::Dict{Symbol,Any}
+end
+function Point(P0::Vector; args...)
+    T = eltype(P0)
+    m = Point{T}(P0, Dict{Symbol,Any}())
+    for arg in args m[arg[1]]=arg[2] end
+    return m
+end
+
+function point(P0::Vector; args...)
+    return Point(P0; args...)
+end
+
+function point(a, b; args...)
+    return Point([a,b,0]; args...)
+end
+
+function point(a, b, c; args...)
+    return Point([a,b,c]; args...)
+end
+
+function Base.getindex(m::Point{T}, i::Int64) where T
+    m.pt[i]
+end
+
+function Base.getindex(m::Point{T}, s::Symbol) where T
+    Base.get(m.attr, s, nothing)
+end
+
+function Base.setindex!(m::Point{T}, v, i::Int64) where T
+    m.pt[i] = v
+end
+
+function Base.setindex!(m::Point{T}, v, s::Symbol) where T
+    m.attr[s] = v
+end
+
+
 
 #----------------------------------------------------------------------
 """
@@ -27,12 +77,16 @@ function Line(P0::Vector, P1::Vector; args...)
     return m
 end
 
+function line(P0::Point,P1::Point; args...)
+    return Line(P0.pt,P1.pt; args...)
+end
+
 function line(P0::Vector,P1::Vector; args...)
     return Line(P0,P1; args...)
 end
 
 function Base.getindex(m::Line{T}, s::Symbol) where T
-    Base.get(m.attr, s, 0)
+    Base.get(m.attr, s, nothing)
 end
 function Base.setindex!(m::Line{T}, v, s::Symbol) where T
     m.attr[s] = v
@@ -61,12 +115,16 @@ function Sphere(P0::Vector, r; args...)
     return m
 end
 
+function sphere(P0::Point,r;args...) 
+    return Sphere(P0.pt,r;args...)
+end
+
 function sphere(P0::Vector,r;args...) 
     return Sphere(P0,r;args...)
 end
 
 function Base.getindex(m::Sphere{T}, s::Symbol) where T
-    get(m.attr, s, 0)
+    get(m.attr, s, nothing)
 end
 function Base.setindex!(m::Sphere{T}, v, s::Symbol) where T
     m.attr[s] = v
@@ -97,12 +155,16 @@ function Cylinder(P0::Vector, P1::Vector, r; args...)
     return m
 end
 
+function cylinder(P0::Point,P1::Point,r;args...) 
+    Cylinder(P0.pt,P1.pt,r;args...)
+end
+
 function cylinder(P0::Vector,P1::Vector,r;args...) 
     Cylinder(P0,P1,r;args...)
 end
 
 function Base.getindex(m::Cylinder, s::Symbol)
-    Base.get(m.attr, s, 0)
+    Base.get(m.attr, s, nothing)
 end
 function Base.setindex!(m::Cylinder, v, s::Symbol)
     m.attr[s] = v
@@ -133,12 +195,17 @@ function Cone(P0::Vector, P1::Vector, r; args...)
     return m
 end
 
+function cone(P0::Point,P1::Point,r;args...)
+    return Cone(P0.pt,P1.pt,r;args...)
+end
+
+
 function cone(P0::Vector,P1::Vector,r;args...)
-    return Cone(P0,P1,r)
+    return Cone(P0,P1,r;args...)
 end
 
 function Base.getindex(m::Cone{T}, s::Symbol) where T
-    Base.get(m.attr, s, 0)
+    Base.get(m.attr, s, nothing)
 end
 function Base.setindex!(m::Cone{T}, v, s::Symbol) where T
     m.attr[s] = v
@@ -149,7 +216,7 @@ end
 `Ellipsoid{T}` represented by 
 
  - `c` the center 
- - `sx, sy, sz` semi-axes. They should be orthogonal but this not checked at the construction. 
+ - `sx, sy, sz` semi-axes. They should be orthogonal but this is not checked at the construction. 
 
 The type `T` is the promote type of the entry types of `c, sx, sy, sz`.
 
@@ -174,11 +241,14 @@ function Ellipsoid(c::Vector,sx::Vector,sy::Vector,sz::Vector;args...)
 end
 
 function ellipsoid(c::Vector,sx::Vector,sy::Vector,sz::Vector;args...) 
-    return Ellipsoid(c,sx,sy,sz)
+    return Ellipsoid(c,sx,sy,sz;args...)
+end
+function ellipsoid(c::Point,sx::Vector,sy::Vector,sz::Vector;args...) 
+    return Ellipsoid(c.pt,sx,sy,sz)
 end
 
 function Base.getindex(m::Ellipsoid{T}, s::Symbol) where T
-    Base.get(m.attr, s, 0)
+    Base.get(m.attr, s, nothing)
 end
 function Base.setindex!(m::Ellipsoid{T}, v, s::Symbol) where T
     m.attr[s] = v
